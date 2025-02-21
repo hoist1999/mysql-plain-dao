@@ -10,10 +10,10 @@ dotenvFlow.config();
 const debug = debug_func("VCU");
 
 /** 操作数据库CRUD工具类
- *  @author Longhui_He 2022
+ *  @author hoist1999
  */
 export class DbUtil {
-    private static pool: mysql.Pool;
+    private static pool: mysql.Pool | null = null;
 
     /** 
      * 获取连接池 
@@ -35,8 +35,8 @@ export class DbUtil {
                 password: process.env.DB_PASSWORD,
                 database: process.env.DB_DATABASE,
                 waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true',
-                connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
-                queueLimit: parseInt(process.env.DB_QUEUE_LIMIT) || 0,
+                connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
+                queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '0'),
 
                 timezone: "+08:00",
 
@@ -107,38 +107,41 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<number | null> {
-        let [result] = await DbUtil.executeAsync(sql, paras);
-        if (isOkPacket(result)) {
-            return result.insertId;
-        } else {
-            return null;
+        const result = await DbUtil.executeAsync(sql, paras);
+        if (!result) return null;
+        const [rows] = result;
+        if (isOkPacket(rows)) {
+            return rows.insertId;
         }
+        return null;
     }
 
     /** 删除数据 */
     static async executeDeleteAsync(
         sql: string,
         paras?: ParasType
-    ): Promise<number> {
-        let [result] = await DbUtil.executeAsync(sql, paras);
-        if (isOkPacket(result)) {
-            return result.affectedRows;
-        } else {
-            return null;
+    ): Promise<number | null> {
+        const result = await DbUtil.executeAsync(sql, paras);
+        if (!result) return null;
+        const [rows] = result;
+        if (isOkPacket(rows)) {
+            return rows.affectedRows;
         }
+        return null;
     }
 
     /** 更新数据 */
     static async executeUpdateAsync(
         sql: string,
         paras?: ParasType
-    ): Promise<number> {
-        let [result] = await DbUtil.executeAsync(sql, paras);
-        if (isOkPacket(result)) {
-            return result.affectedRows;
-        } else {
-            return null;
+    ): Promise<number | null> {
+        const result = await DbUtil.executeAsync(sql, paras);
+        if (!result) return null;
+        const [rows] = result;
+        if (isOkPacket(rows)) {
+            return rows.affectedRows;
         }
+        return null;
     }
 
     /** 获得数据集合 */
@@ -146,12 +149,13 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<T[]> {
-        let [item_list] = await DbUtil.executeAsync(sql, paras);
+        const result = await DbUtil.executeAsync(sql, paras);
+        if (!result) return [];
+        const [item_list] = result;
         if (isRowDataPacketList(item_list)) {
             return item_list as T[];
-        } else {
-            return [];
         }
+        return [];
     }
 
     /** 获得单行数据 */
@@ -159,20 +163,18 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<T | null> {
-        let [item_list] = await DbUtil.executeAsync(sql, paras);
+        const result = await DbUtil.executeAsync(sql, paras);
+        if (!result) return null;
+        const [item_list] = result;
         if (isRowDataPacketList(item_list)) {
             if (item_list.length === 1) {
                 return item_list[0] as T;
             } else if (item_list.length === 0) {
                 return null;
-            } else {
-                throw new Error(
-                    `数据库查询返回结果数量大于1，请检查SQL: ${sql} `
-                );
             }
-        } else {
-            return null;
+            throw new Error(`数据库查询返回结果数量大于1，请检查SQL: ${sql}`);
         }
+        return null;
     }
 
     /** 获得单个值 */
@@ -180,7 +182,9 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<string | number | null> {
-        let [item_list, fields] = await DbUtil.executeAsync(sql, paras);
+        const result = await DbUtil.executeAsync(sql, paras);
+        if (!result) return null;
+        const [item_list, fields] = result;
 
         if (isRowDataPacketList(item_list)) {
             if (item_list.length === 1) {
@@ -189,20 +193,16 @@ export class DbUtil {
                 return val;
             } else if (item_list.length === 0) {
                 return null;
-            } else {
-                throw new Error(
-                    `数据库查询返回结果数量大于1，请检查SQL: ${sql} `
-                );
             }
-        } else {
-            return null;
+            throw new Error(`数据库查询返回结果数量大于1，请检查SQL: ${sql}`);
         }
+        return null;
     }
 
     static async executeGetStringAsync(
         sql: string,
         paras?: ParasType
-    ): Promise<string> {
+    ): Promise<string | null> {
         let val = await DbUtil.executeGetValueAsync(sql, paras);
         if (isString(val)) {
             return val;
@@ -265,38 +265,6 @@ export class DbUtil {
         return row_list;
     }
 
-    /**
-     * 将普通的数组转化为树状结构的数据以支持antd的表格树状展示
-     */
-    static listToTree(list: any[]) {
-        //参考了
-        // https://stackoverflow.com/questions/18017869/build-tree-array-from-flat-array-in-javascript
-
-        var map: Map<string, any>,
-            node,
-            roots = [],
-            i;
-
-        for (i = 0; i < list.length; i += 1) {
-            map.set(list[i].id, i); // initialize the map
-        }
-
-        for (i = 0; i < list.length; i += 1) {
-            node = list[i];
-            if (node.parent_id != "0") {
-                // if you have dangling branches check that map[node.parent_id] exists
-                const index = map.get(node.parent_id);
-                if (!list[index].children) {
-                    list[index].children = [];
-                }
-                list[index].children.push(node);
-            } else {
-                roots.push(node);
-            }
-        }
-        return roots;
-    }
-
     static removeFieldFromList(list: any[], field: string) {
         for (let row of list) {
             delete row[field];
@@ -310,7 +278,7 @@ export class DbUtil {
      */
     static async getTotalAsync(sql: string): Promise<number> {
         let total = await DbUtil.executeGetNumberAsync(sql);
-        return total;
+        return total ?? 0;
     }
 
     /**
@@ -324,7 +292,7 @@ export class DbUtil {
             [table_name]
         );
         let current_max_sort_order = await DbUtil.executeGetNumberAsync(sql);
-        return current_max_sort_order + 1;
+        return (current_max_sort_order ?? 0) + 1;
     }
 
     /**
@@ -334,21 +302,21 @@ export class DbUtil {
      * @returns
      */
     static async getIdFromUUIDAsync(target_type: string, target_uuid: string) {
-        //这下面的表，都是需要用到联系人的表
         let sql = ` SELECT id FROM ?? WHERE uuid = ? `;
         let para = [target_type, target_uuid];
         let merge_sql = SqlString.format(sql, para);
 
-        const result_list = await DbUtil.executeGetListAsync(merge_sql);
+        interface IdResult {
+            id: number;
+        }
+        const result_list = await DbUtil.executeGetListAsync<IdResult>(merge_sql);
         if (Array.isArray(result_list)) {
             if (result_list.length === 1) {
-                return result_list[0]["id"];
+                return result_list[0].id;
             } else if (result_list.length > 1) {
                 debug("发生错误，UUID不唯一");
             }
-        } else {
-            debug("发生错误，该UUID无法查找到对应的数据");
-            return null;
         }
+        return null;
     }
 }

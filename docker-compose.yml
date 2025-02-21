@@ -1,0 +1,40 @@
+services:
+  mysql_test:
+    image: mysql:8.0
+    container_name: mysql_test
+    environment:
+      MYSQL_ROOT_PASSWORD: test123
+      MYSQL_DATABASE: test_db
+    volumes:
+      - ./__tests__/sql:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ptest123"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  jest_test:
+    image: node:18
+    container_name: jest_test
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - DB_HOST=mysql_test
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=test123
+      - DB_DATABASE=test_db
+      - DB_CONNECTION_LIMIT=10
+      - DB_QUEUE_LIMIT=0
+      - DB_WAIT_FOR_CONNECTIONS=true
+      - NODE_ENV=test
+    command: >
+      sh -c "
+        pnpm install &&
+        pnpm test
+      "
+    depends_on:
+      mysql_test:
+        condition: service_healthy 

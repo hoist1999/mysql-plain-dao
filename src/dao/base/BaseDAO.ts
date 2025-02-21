@@ -20,7 +20,7 @@ export interface PagerParams {
 }
 
 /** 所有数据层DAO的基类，继承后立即获得基本的CRUD能力
- * @author Longhui_He 2022
+ * @author hoist1999
  */
 export class BaseDAO<T extends PlainObject> {
     protected option: Option;
@@ -136,7 +136,7 @@ export class BaseDAO<T extends PlainObject> {
     }
 
     /** 传入对象以更新数据行 */
-    async updateAsync(item: T): Promise<number> {
+    async updateAsync(item: T): Promise<number | null> {
         const { id, ...update_item } = item;
         const sql = SqlString.format(
             `UPDATE ${this.option.table_name} SET ? WHERE id = ?`,
@@ -147,7 +147,7 @@ export class BaseDAO<T extends PlainObject> {
     }
 
     /** 根据id删除数据行 */
-    async deleteByIdAsync(id: number): Promise<number> {
+    async deleteByIdAsync(id: number): Promise<number | null> {
         const sql = `DELETE FROM ${this.option.table_name} WHERE id = ?`;
         let result = await DbUtil.executeDeleteAsync(sql, [id]);
         return result;

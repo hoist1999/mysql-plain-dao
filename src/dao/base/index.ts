@@ -9,6 +9,4 @@ export * from './SqlUtil'
 export * from './Common'
 
 // 导出测试相关
-export * from './TestTable'
-export * from './TestTableDao'
 export * from './TestUtil' 

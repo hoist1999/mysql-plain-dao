@@ -1,15 +1,18 @@
-import { OkPacket, RowDataPacket } from "mysql2/promise";
+import { OkPacket, RowDataPacket, ResultSetHeader } from "mysql2/promise";
 import { ResultType } from "./Types";
 
 // type guard: https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates
 /** 判断是否为OkPacket类型 */
-export function isOkPacket(value: ResultType): value is OkPacket {
-    return (value as OkPacket).insertId !== undefined;
+export function isOkPacket(value: any): value is ResultSetHeader {
+    return value && 
+           (value.constructor.name === "OkPacket" || 
+            value.constructor.name === "ResultSetHeader");
 }
 
 /** 判断是否为RowDataPacket[]类型 */
-export function isRowDataPacketList(value: ResultType): value is RowDataPacket[] {
-    return (value as RowDataPacket[]).length !== undefined;
+export function isRowDataPacketList(value: any): value is RowDataPacket[] {
+    return Array.isArray(value) && value.length >= 0 && 
+           (!value[0] || value[0].constructor.name === "RowDataPacket");
 }
 
 /** 测试是否为number */

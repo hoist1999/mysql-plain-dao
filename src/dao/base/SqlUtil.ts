@@ -2,7 +2,7 @@ import sqlstring from "sqlstring";
 import { OrderBy, SortCondition } from "../Types";
 
 /** 用于构造SQL语句的工具类
- *  @author Longhui_He 2022
+ *  @author hoist1999
  */
 export class SqlUtil {
   static like(field: string, condition_value: string) {

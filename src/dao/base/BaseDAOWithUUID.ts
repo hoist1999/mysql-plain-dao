@@ -6,7 +6,7 @@ import { DbUtil } from "./DbUtil";
 
 /** 所有数据层DAO的基类，继承后立即获得基本的CRUD能力
  * （在整型PrimaryKey基础上，增加一列UUID提高数据安全性）
- * @author Longhui_He 2022
+ * @author hoist1999
  */
 export class BaseDAOWithUUID<T extends PlainObject> extends BaseDAO<T> {
 	constructor(option: Option) {
