@@ -1,12 +1,12 @@
-// 导出基础DAO类
+// Base DAO classes
 export * from './BaseDAO'
 export * from './BaseDAOWithUUID'
 
-// 导出工具类
+// Utility modules
 export * from './DbUtil'
 export * from './DbTransactionUtil'
 export * from './SqlUtil'
 export * from './Common'
 
-// 导出测试相关
+// Test utilities
 export * from './TestUtil' 

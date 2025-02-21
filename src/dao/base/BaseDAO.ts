@@ -9,17 +9,17 @@ export interface Option {
 }
 
 export interface PagerParams {
-    /** 当前页面数字 */
+    /** Current page number */
     current?: number | string;
-    /** 页面大小 */
+    /** Page size */
     pageSize?: number | string;
-    /** 排序方式 */
+    /** Sort order */
     orderPara?: SortCondition | string;
-    /** Form表单中的搜索条件 */
+    /** Search parameters from form */
     searchParams?: Record<string, string>;
 }
 
-/** 所有数据层DAO的基类，继承后立即获得基本的CRUD能力
+/** Base class for all DAO layers, provides basic CRUD capabilities upon inheritance
  * @author hoist1999
  */
 export class BaseDAO<T extends PlainObject> {
@@ -36,12 +36,12 @@ export class BaseDAO<T extends PlainObject> {
         };
     }
 
-    /** 获得当前DAO对应的表名 */
+    /** Get current table name */
     getTableName() {
         return this.option.table_name;
     }
 
-    /** 获得数据集合 */
+    /** Get data collection */
     protected async executeGetListAsync(
         sql: string,
         paras?: ParasType
@@ -49,7 +49,7 @@ export class BaseDAO<T extends PlainObject> {
         return await DbUtil.executeGetListAsync(sql, paras);
     }
 
-    /** 获得单个数据 */
+    /** Get single data record */
     protected async executeGetSingleAsync(
         sql: string,
         paras?: ParasType
@@ -57,7 +57,7 @@ export class BaseDAO<T extends PlainObject> {
         return await DbUtil.executeGetSingleAsync(sql, paras);
     }
 
-    /** 插入数据 */
+    /** Insert data */
     async insertAsync(item: InsertModel<T>): Promise<number | null> {
         const sql = SqlString.format(
             `INSERT INTO ${this.option.table_name} SET ?`,
@@ -67,18 +67,17 @@ export class BaseDAO<T extends PlainObject> {
         return insertId;
     }
 
-    /** 批量插入数据：比逐条插入的效率更高。
-     * 拼好SQL后一次向mysql执行操作。
-     * 10万条插入大约：1.374s */
+    /** Bulk insert data: More efficient than inserting one by one.
+     * Execute a single SQL statement for all insertions.
+     * ~1.374s for 100k records */
     async bulkInsertAsync(item_list: Array<T | InsertModel<T>>) {
         if (!item_list || item_list.length == 0) {
             return;
         }
-        // console.time('bulk_insert: 组装SQL时间');
 
         const keys = Object.keys(item_list[0]);
 
-        //两层map，将对象数组转化为SQL的值
+        // Double map to convert object array to SQL values
         const values_str = item_list
             .map(
                 (item) =>
@@ -91,32 +90,26 @@ export class BaseDAO<T extends PlainObject> {
         let sql = ` INSERT INTO ${this.option.table_name}(${SqlString.escapeId(
             keys
         )}) VALUES ${values_str}`;
-        // console.timeEnd('bulk_insert: 组装SQL时间');
 
-        //console.log({ sql });
-
-        // console.time('bulk_insert: SQL执行时间');
         await DbUtil.queryAsync(sql);
-        // console.time('bulk_insert: SQL执行时间');
 
-        // 下面注释不要删除：
-        // 其他：因为Object.keys的顺序对插入的正确影响很大，我特别测试了，和sqlstring中的产生的一致。
-        // //测试顺序Object.keys的key顺序和for in(sqlstring中使用的）的一致
+        // Keep this comment for reference:
+        // Note: Object.keys order is crucial for correct insertion
+        // Tested that it matches the order used in sqlstring
+        // Test code for key order:
         // var obj = {
         //     a : 1,
         //     b : 2,
         //     d : 3,
         //     c : 4,
         // }
-
         // console.log(Object.keys(obj));
-
         // for (var key in obj) {
         //     console.log({key});
         // }
     }
 
-    /** 获得所有的数据列表 */
+    /** Get all data records */
     async getListAsync(): Promise<Array<T>> {
         const sql = `SELECT * FROM ${this.option.table_name} `;
         const item_list = await DbUtil.executeGetListAsync<T>(sql);
@@ -125,7 +118,7 @@ export class BaseDAO<T extends PlainObject> {
         return item_list;
     }
 
-    /** 使用id查询获得单个数据对象 */
+    /** Get single record by ID */
     async getByIdAsync(id: number): Promise<T | null> {
         const sql = `SELECT * FROM ${this.option.table_name} WHERE id = ?`;
         const item = await DbUtil.executeGetSingleAsync<T>(sql, [id]);
@@ -135,7 +128,7 @@ export class BaseDAO<T extends PlainObject> {
         return item;
     }
 
-    /** 传入对象以更新数据行 */
+    /** Update record with provided object */
     async updateAsync(item: T): Promise<number | null> {
         const { id, ...update_item } = item;
         const sql = SqlString.format(
@@ -146,7 +139,7 @@ export class BaseDAO<T extends PlainObject> {
         return await DbUtil.executeUpdateAsync(sql);
     }
 
-    /** 根据id删除数据行 */
+    /** Delete record by ID */
     async deleteByIdAsync(id: number): Promise<number | null> {
         const sql = `DELETE FROM ${this.option.table_name} WHERE id = ?`;
         let result = await DbUtil.executeDeleteAsync(sql, [id]);
@@ -154,9 +147,8 @@ export class BaseDAO<T extends PlainObject> {
     }
 
     /**
-     * 获得当前表的排序列最大值加一
-     * @param table_name
-     * @returns
+     * Get maximum sort order value plus one
+     * @returns Next available sort order
      */
     async getMaxSortOrderAsync(): Promise<number> {
         let sql = SqlString.format(
@@ -168,11 +160,13 @@ export class BaseDAO<T extends PlainObject> {
     }
 
     /**
-     * 获取分页数据
-     * 如果要用LEFT JOIN
-     * 参考WarehouseDao的实现
-     * @param fields 需要返回的列名称的数组
-     * @param param1 分页的参数
+     * Get paginated data
+     * For LEFT JOIN usage,
+     * refer to WarehouseDao implementation
+     * @param fields Array or string of column names to return
+     * @param where_str WHERE clause
+     * @param params Pagination parameters
+     * @param join_table_str JOIN clause
      * @returns `{ list, total }`
      */
     protected async getPagerDataAsync(
@@ -190,22 +184,21 @@ export class BaseDAO<T extends PlainObject> {
             : fields;
 
         let sql_list = `
-			SELECT ${fieldsStr}
-			FROM ${this.option.table_name}
+            SELECT ${fieldsStr}
+            FROM ${this.option.table_name}
             ${join_table_str}
-			${where_str}
-			${SqlUtil.orderBy(orderPara || '')}
-			${SqlUtil.limitPager(current, pageSize)}
-		`;
+            ${where_str}
+            ${SqlUtil.orderBy(orderPara || '')}
+            ${SqlUtil.limitPager(current, pageSize)}
+        `;
 
-
-        //TODO：增加对json的处理
-        //${DbUtil.sql_order_by(conditions)}
+        // TODO: Add JSON handling
+        // ${DbUtil.sql_order_by(conditions)}
 
         const list = (await DbUtil.executeGetListAsync(sql_list)) as Array<T>;
-        //DbUtil.parse_json(list, "json_data");
+        // DbUtil.parse_json(list, "json_data");
 
-        //数据记录数量
+        // Get total count
         let sql_total = ` SELECT count(*) AS total FROM ${this.option.table_name} ${where_str} `;
         let total = await DbUtil.getTotalAsync(sql_total);
 

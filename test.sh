@@ -1,39 +1,41 @@
 #!/bin/bash
 
-# 定义粗体输出函数
+# Define bold print function
 print_bold() {
     echo -e "\033[1m$1\033[0m"
 }
 
+# Define red print function
 print_red() {
     echo -e "\033[1;31m$1\033[0m"
 }
 
+# Define green print function
 print_green() {
     echo -e "\033[1;32m$1\033[0m"
 }
 
-# 清理日志目录
+# Clean up logs directory
 rm -rf ./docker-logs/*
 
-# 获取所有需要的镜像
-# 从 docker-compose.yml 获取镜像
+# Get all required images
+# Extract images from docker-compose.yml
 COMPOSE_IMAGES=$(grep 'image:' docker-compose.yml | awk '{print $2}')
 
-# 从 Dockerfile 获取基础镜像
+# Extract base images from Dockerfile
 DOCKERFILE_IMAGES=$(grep '^FROM' Dockerfile.test | awk '{print $2}')
 
-# 合并所有镜像并去重
+# Merge all images and remove duplicates
 IMAGES=$(echo -e "${COMPOSE_IMAGES}\n${DOCKERFILE_IMAGES}" | sort -u)
 
-# 显示将要执行的 docker pull 命令
+# Display docker pull commands to be executed
 print_bold "Pull the following image in advance:"
 for IMAGE in $IMAGES; do
     echo "  $IMAGE"
 done
 echo "---"
 
-# 检查并拉取镜像
+# Check and pull images
 for IMAGE in $IMAGES; do
     echo "Checking $IMAGE..."
     if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
@@ -43,7 +45,7 @@ for IMAGE in $IMAGES; do
             exit 1
         fi
         
-        # 再次验证镜像是否存在
+        # Verify image exists after pulling
         if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
             print_red "Image $IMAGE not found after pulling"
             exit 1
@@ -57,7 +59,7 @@ echo "---"
 
 print_bold "Start the container and run the test"
 
-# 启动容器并运行测试
+# Start containers and run tests
 docker-compose up --build --abort-on-container-exit --exit-code-from jest_test
 TEST_RESULT=$?
 
@@ -69,6 +71,6 @@ else
     print_green "✅ All tests passed!"
 fi
 
-# 清理容器和卷
+# Clean up containers and volumes
 print_bold "Cleaning up containers and volumes..."
 docker-compose down -v

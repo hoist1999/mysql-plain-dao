@@ -1,24 +1,24 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig([
-  // TypeScript库 - 输出ESM格式
+  // TypeScript Library - Output ESM format
   {
     entry: {
       'index': 'src/index.ts'
     },
-    format: ['esm'],  // 只输出ESM格式
+    format: ['esm'],  // ESM format only
     dts: true,
     splitting: false,
     sourcemap: true,
     clean: true,
   },
-  // CLI工具 - 只输出Node.js格式
+  // CLI Tool - Node.js format only
   {
     entry: {
       'generator/cli': 'src/generator/cli.ts',
     },
-    format: ['cjs'],  // 只输出CommonJS格式
-    dts: false,       // CLI不需要类型声明
+    format: ['cjs'],  // CommonJS format only
+    dts: false,       // No type declarations needed for CLI
     splitting: false,
     sourcemap: true,
     clean: false,

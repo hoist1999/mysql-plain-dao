@@ -1,18 +1,18 @@
 FROM node:20-slim
 
-# 使用 npm 安装 pnpm
+# Install pnpm using npm
 RUN npm install -g pnpm
 
-# 安装 tree 命令
+# Install tree command
 RUN apt-get update && apt-get install -y tree
 
 WORKDIR /app
 
-# 复制 package.json 和 pnpm-lock.yaml
+# Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
-# 安装依赖 - 这一层会被缓存，除非 package.json 或 pnpm-lock.yaml 发生变化
+# Install dependencies - This layer will be cached unless package.json or pnpm-lock.yaml changes
 RUN pnpm install --frozen-lockfile
 
-# 复制源代码 - 这一层包含经常变化的源代码
+# Copy source code - This layer contains frequently changing source code
 COPY . .

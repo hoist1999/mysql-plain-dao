@@ -9,15 +9,15 @@ dotenvFlow.config();
 
 const debug = debug_func("VCU");
 
-/** 操作数据库CRUD工具类
+/** Database CRUD utility class
  *  @author hoist1999
  */
 export class DbUtil {
     private static pool: mysql.Pool | null = null;
 
     /** 
-     * 获取连接池 
-     * 数据库的配置在.env .env.test .env.production 文件中配置
+     * Get connection pool
+     * Database configuration is set in .env .env.test .env.production files
     */
     static async getPool() {
         if (!this.pool) {
@@ -38,63 +38,63 @@ export class DbUtil {
                 connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
                 queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '0'),
 
-                timezone: "+08:00",
+                // timezone: "+08:00",
 
-                // 开启这个选项，decimal数据类型返回的会转化为数字类型（float）
+                // Enable this option to convert decimal data type to number (float)
                 // https://github.com/sidorares/node-mysql2/blob/bc280518b4bac3212ecfe48c20955354fff38aa6/documentation/Readme.md#known-incompatibilities-with-node-mysql
                 decimalNumbers: true,
 
                 // https://github.com/sidorares/node-mysql2/blob/07a429d9765dcbb24af4264654e973847236e0de/documentation/Extras.md
-                // 开启命名化参数的支持： connection.execute('select :x + :y as z', { x: 1, y: 2 })
+                // Enable named parameter support: connection.execute('select :x + :y as z', { x: 1, y: 2 })
                 namedPlaceholders: true,
             });
         }
         return this.pool;
     }
 
-    /** 结束连接池 */
+    /** Release connection pool */
     static async relaseConnectionPoolAsync() {
         if (this.pool) {
             await this.pool.end();
-            this.pool = null; // 清空pool引用
+            this.pool = null; // Clear pool reference
         }
     }
 
-    /** query方式执行，以TEXT协议传送给mysql，
-     * 内部不做prepared，
-     * 在执行非常大的SQL语句时候有优势。 */
+    /** Execute using query method, sends to MySQL using TEXT protocol.
+     * No internal preparation,
+     * Advantageous when executing very large SQL statements. */
     static async queryAsync(sql: string, paras?: ParasType) {
         try {
-            debug("===正在执行SQL查询: query方式 ===");
+            debug("=== Executing SQL Query: Query Method ===");
             debug("sql:", sql);
             debug("paras:", paras);
             const pool = await this.getPool();
             let result = await pool.query(sql, paras);
             return result;
         } catch (error) {
-            debug("===执行数据库查询过程中发生错误===");
+            debug("=== Error Executing Database Query ===");
             debug("sql:", sql);
             debug("paras:", paras);
-            debug("错误信息: ", error);
+            debug("Error: ", error);
             return null;
         }
     }
 
-    /** execute方式执行，以二进制协议传送给mysql，内部做prepared。
-     * 占位参数少的情况下，和query的性能差不多，同一个SQL多次执行时有优势。
-     * 占位参数多的情况下，用query性能会更好。
-     * 参考：https://github.com/sidorares/node-mysql2/issues/796#issuecomment-397326698
+    /** Execute using execute method, sends to MySQL using binary protocol with prepared statements.
+     * Similar performance to query with few placeholders, advantageous for repeated SQL execution.
+     * Query performs better with many placeholders.
+     * Reference: https://github.com/sidorares/node-mysql2/issues/796#issuecomment-397326698
      */
     static async executeAsync(sql: string, paras?: ParasType) {
         try {
-            debug("===正在执行SQL查询: execute方式 ===");
+            debug("=== Executing SQL Query: Execute Method ===");
             debug("sql:", sql);
             debug("paras:", paras);
             const pool = await this.getPool();
             let result = await pool.query(sql, paras);
             return result;
         } catch (error) {
-            console.error("===执行数据库查询过程中发生错误===");
+            console.error("=== Error Executing Database Query ===");
             console.error(error);
             console.error("sql:", sql);
             console.error("paras:", paras);
@@ -102,7 +102,7 @@ export class DbUtil {
         }
     }
 
-    /** 插入数据 */
+    /** Insert data */
     static async executeInsertAsync(
         sql: string,
         paras?: ParasType
@@ -116,7 +116,7 @@ export class DbUtil {
         return null;
     }
 
-    /** 删除数据 */
+    /** Delete data */
     static async executeDeleteAsync(
         sql: string,
         paras?: ParasType
@@ -130,7 +130,7 @@ export class DbUtil {
         return null;
     }
 
-    /** 更新数据 */
+    /** Update data */
     static async executeUpdateAsync(
         sql: string,
         paras?: ParasType
@@ -144,7 +144,7 @@ export class DbUtil {
         return null;
     }
 
-    /** 获得数据集合 */
+    /** Get data collection */
     static async executeGetListAsync<T>(
         sql: string,
         paras?: ParasType
@@ -158,7 +158,7 @@ export class DbUtil {
         return [];
     }
 
-    /** 获得单行数据 */
+    /** Get single row */
     static async executeGetSingleAsync<T>(
         sql: string,
         paras?: ParasType
@@ -172,12 +172,12 @@ export class DbUtil {
             } else if (item_list.length === 0) {
                 return null;
             }
-            throw new Error(`数据库查询返回结果数量大于1，请检查SQL: ${sql}`);
+            throw new Error(`Database query returned more than one result, please check SQL: ${sql}`);
         }
         return null;
     }
 
-    /** 获得单个值 */
+    /** Get single value */
     static async executeGetValueAsync(
         sql: string,
         paras?: ParasType
@@ -194,7 +194,7 @@ export class DbUtil {
             } else if (item_list.length === 0) {
                 return null;
             }
-            throw new Error(`数据库查询返回结果数量大于1，请检查SQL: ${sql}`);
+            throw new Error(`Database query returned more than one result, please check SQL: ${sql}`);
         }
         return null;
     }
@@ -209,7 +209,7 @@ export class DbUtil {
         } else if (!val) {
             return null;
         } else {
-            throw new Error("返回结果不是string类型");
+            throw new Error("Return value is not of type string");
         }
     }
 
@@ -223,12 +223,12 @@ export class DbUtil {
         } else if (!val) {
             return null;
         } else {
-            throw new Error("返回结果不是number类型");
+            throw new Error("Return value is not of type number");
         }
     }
 
-    //Mariadb 自身没有JSON类型，只有LONGTEXT类型，所以只能手动做解释
-    //data 和 field_name_data 均可以接受单个数据或者数组类型
+    // MariaDB doesn't have a native JSON type, only LONGTEXT, so manual parsing is needed
+    // Both data and field_name_data can accept single items or arrays
     static parseJson(
         data: Record<string, any> | Array<Record<string, any>>,
         field_name_data: string | string[] = "json_data"
@@ -273,8 +273,8 @@ export class DbUtil {
     }
 
     /**
-     * 获得结果的总数量
-     * @param sql 例如SELECT count(*) AS total FROM ...
+     * Get total count of results
+     * @param sql e.g., SELECT count(*) AS total FROM ...
      */
     static async getTotalAsync(sql: string): Promise<number> {
         let total = await DbUtil.executeGetNumberAsync(sql);
@@ -282,9 +282,9 @@ export class DbUtil {
     }
 
     /**
-     * 获得某个表的排序列最大值加一
-     * @param table_name
-     * @returns
+     * Get maximum sort order value plus one for a table
+     * @param table_name Table name
+     * @returns Next available sort order
      */
     static async getMaxSortOrderAsync(table_name: string): Promise<number> {
         let sql = SqlString.format(
@@ -296,10 +296,10 @@ export class DbUtil {
     }
 
     /**
-     * 根据uuid，从数据库中查找到真实的整数id
-     * @param target_type 需要查找UUID的目标表格名
-     * @param target_uuid UUID值
-     * @returns
+     * Find real integer ID from database using UUID
+     * @param target_type Target table name
+     * @param target_uuid UUID value
+     * @returns Integer ID
      */
     static async getIdFromUUIDAsync(target_type: string, target_uuid: string) {
         let sql = ` SELECT id FROM ?? WHERE uuid = ? `;
@@ -314,7 +314,7 @@ export class DbUtil {
             if (result_list.length === 1) {
                 return result_list[0].id;
             } else if (result_list.length > 1) {
-                debug("发生错误，UUID不唯一");
+                debug("Error: UUID is not unique");
             }
         }
         return null;

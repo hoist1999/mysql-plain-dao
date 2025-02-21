@@ -5,39 +5,39 @@ import { DbUtil } from "./DbUtil";
 
 const debug = debug_func("VCU");
 
-/** 数据库事务工具类
+/** Database transaction utility class
  *  @author Assistant 2024
  */
 export class DbTransactionUtil {
     /**
-     * 在事务中执行一系列数据库操作
-     * @param callback 在事务中要执行的操作函数
-     * @returns 返回事务执行的结果
+     * Execute a series of database operations within a transaction
+     * @param callback Function containing operations to execute within the transaction
+     * @returns Result of the transaction execution
      * @example
      * ```typescript
      * try {
      *     const result = await DbTransactionUtil.executeInTransaction(async (connection) => {
-     *         // 执行第一个操作
+     *         // Execute first operation
      *         await DbTransactionUtil.executeQueryInTransaction(
      *             connection,
      *             "INSERT INTO table1 (field1) VALUES (?)",
      *             ["value1"]
      *         );
      * 
-     *         // 执行第二个操作
+     *         // Execute second operation
      *         await DbTransactionUtil.executeQueryInTransaction(
      *             connection,
      *             "UPDATE table2 SET field2 = ? WHERE id = ?",
      *             ["value2", 1]
      *         );
      * 
-     *         // 返回结果
+     *         // Return result
      *         return "success";
      *     });
      * 
-     *     console.log("事务执行成功:", result);
+     *     console.log("Transaction executed successfully:", result);
      * } catch (error) {
-     *     console.error("事务执行失败:", error);
+     *     console.error("Transaction execution failed:", error);
      * }
      * ```
      */
@@ -49,31 +49,31 @@ export class DbTransactionUtil {
 
         try {
             await connection.beginTransaction();
-            debug("=== 开始事务 ===");
+            debug("=== Transaction Started ===");
 
             const result = await callback(connection);
 
             await connection.commit();
-            debug("=== 事务提交成功 ===");
+            debug("=== Transaction Committed Successfully ===");
 
             return result;
         } catch (error) {
             await connection.rollback();
-            debug("=== 事务回滚 ===");
-            debug("错误信息:", error);
+            debug("=== Transaction Rolled Back ===");
+            debug("Error:", error);
             throw error;
         } finally {
             connection.release();
-            debug("=== 释放连接 ===");
+            debug("=== Connection Released ===");
         }
     }
 
     /**
-     * 在事务中执行SQL查询
-     * @param connection 数据库连接
-     * @param sql SQL语句
-     * @param params SQL参数
-     * @returns 查询结果
+     * Execute SQL query within a transaction
+     * @param connection Database connection
+     * @param sql SQL statement
+     * @param params SQL parameters
+     * @returns Query result
      */
     static async executeQueryInTransaction(
         connection: Connection,
@@ -81,17 +81,17 @@ export class DbTransactionUtil {
         params?: ParasType
     ) {
         try {
-            debug("=== 正在执行事务中的SQL查询 ===");
+            debug("=== Executing SQL Query in Transaction ===");
             debug("sql:", sql);
             debug("params:", params);
 
             const result = await connection.execute(sql, params);
             return result;
         } catch (error) {
-            debug("=== 执行事务中的SQL查询时发生错误 ===");
+            debug("=== Error Executing SQL Query in Transaction ===");
             debug("sql:", sql);
             debug("params:", params);
-            debug("错误信息:", error);
+            debug("Error:", error);
             throw error;
         }
     }
