@@ -16,7 +16,12 @@
     "test": "jest",
     "prepublishOnly": "pnpm build"
   },
-  "keywords": ["typescript", "math", "utilities"],
+  "keywords": [
+    "typescript",
+    "mysql",
+    "DAO",
+    "plain sql"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
@@ -34,5 +39,12 @@
   "bugs": {
     "url": "https://github.com/hoist1999/mysql-plain-dao/issues"
   },
-  "homepage": "https://github.com/hoist1999/mysql-plain-dao#readme"
-} 
+  "homepage": "https://github.com/hoist1999/mysql-plain-dao#readme",
+  "dependencies": {
+    "@types/lodash": "^4.17.15",
+    "lodash": "^4.17.21",
+    "mysql": "^2.18.1",
+    "pg-promise": "^11.10.2",
+    "typescript-formatter": "^7.2.2"
+  }
+}
