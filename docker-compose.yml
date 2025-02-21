@@ -4,7 +4,7 @@ services:
     container_name: mysql_test
     environment:
       MARIADB_ROOT_PASSWORD: root
-      MARIADB_DATABASE: test
+      MARIADB_DATABASE: test_db
     volumes:
       - ./src/__tests__/sql:/docker-entrypoint-initdb.d
     command: --default-authentication-plugin=mysql_native_password
@@ -21,7 +21,7 @@ services:
     container_name: jest_test
     working_dir: /app
     volumes:
-      - .:/app
+      # - .:/app
       - /app/node_modules
       - ./docker-logs:/root/.npm/_logs
     environment:
@@ -29,16 +29,24 @@ services:
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=root
-      - DB_DATABASE=test
+      - DB_DATABASE=test_db
       - DB_CONNECTION_LIMIT=10
       - DB_QUEUE_LIMIT=0
       - DB_WAIT_FOR_CONNECTIONS=true
       - NODE_ENV=test
+      - DOCKER_CLIENT_TIMEOUT=300
+      - COMPOSE_HTTP_TIMEOUT=300
+      - WAIT_HOSTS=mysql_test:3306
+      - WAIT_TIMEOUT=60
     command: >
-      sh -c "
-        pnpm install &&
-        pnpm test -- --verbose
+      bash -c "
+        echo 'All files in /app (node_modules is ignored here)' > /root/.npm/_logs/files.log &&
+        tree -a -I 'node_modules|.git' /app >> /root/.npm/_logs/files.log &&
+        set -o pipefail &&
+        pnpm test 2>&1 | tee /root/.npm/_logs/jest-output.log
       "
     depends_on:
       mysql_test:
         condition: service_healthy
+    restart: on-failure:3
+    stop_grace_period: 60s

@@ -1,3 +1,4 @@
+// use a very simple test to check the test environment
 describe('Basic Math Operations', () => {
     test('adds 1 + 1 to equal 2', () => {
         expect(1 + 1).toBe(2);

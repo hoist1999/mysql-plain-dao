@@ -10,6 +10,6 @@ export interface User {
     is_active: boolean;
     role: 'admin' | 'user' | 'guest';
     last_login?: Date;
-    created_at?: Date;
-    updated_at?: Date;
-} 
+    created_at: Date;
+    updated_at: Date;
+}

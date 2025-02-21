@@ -1,0 +1,13 @@
+node_modules/
+dist/
+docker-logs/
+.git/ 
+.github/
+.pnpm-store/
+.cursorrules
+.gitignore
+docker-compose.yml
+Dockerfile.test
+test.sh
+.dockerignore
+README.md

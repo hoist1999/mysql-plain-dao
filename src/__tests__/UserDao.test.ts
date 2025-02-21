@@ -2,16 +2,19 @@ import { DbUtil } from '../dao/base/DbUtil';
 import { UserDao } from './UserDao';
 import { User } from './User';
 import { InsertModel } from '../dao/Types';
+import { getDBConfig } from './DbConfig';
 
 describe('UserDao', () => {
     let userDao: UserDao;
 
     beforeAll(async () => {
-        // 确保环境变量设置正确
-        process.env.DB_HOST = 'localhost';
-        process.env.DB_USER = 'root';
-        process.env.DB_PASSWORD = 'test123';
-        process.env.DB_DATABASE = 'test_db';
+        // Use configuration from DbConfig
+        const config = getDBConfig();
+        process.env.DB_HOST = config.host;
+        process.env.DB_USER = config.user;
+        process.env.DB_PASSWORD = config.password;
+        process.env.DB_DATABASE = config.database;
+        process.env.DB_PORT = String(config.port);
 
         userDao = new UserDao();
     });
@@ -21,7 +24,7 @@ describe('UserDao', () => {
     });
 
     beforeEach(async () => {
-        // 清理表数据
+        // Clear table data
         await DbUtil.executeAsync('DELETE FROM user');
     });
 
@@ -30,10 +33,10 @@ describe('UserDao', () => {
             username: 'testuser',
             email: 'test@example.com',
             password_hash: 'hashed_password',
-            first_name: 'Test',
-            last_name: 'User',
             is_active: true,
-            role: 'user'
+            role: 'user',
+            created_at: new Date(),
+            updated_at: new Date()
         };
 
         const insertId = await userDao.insertAsync(user);
@@ -42,7 +45,12 @@ describe('UserDao', () => {
 
         const insertedUser = await userDao.getByIdAsync(insertId || 0);
         expect(insertedUser).toBeDefined();
+        expect(insertedUser!.uuid).toBeTruthy();
         expect(insertedUser!.username).toBe(user.username);
         expect(insertedUser!.email).toBe(user.email);
+        expect(insertedUser!.role).toBe(user.role);
+        expect(insertedUser!.is_active).toBe(user.is_active);
+        expect(insertedUser!.created_at).toBeInstanceOf(Date);
+        expect(insertedUser!.updated_at).toBeInstanceOf(Date);
     });
 }); 
