@@ -1,31 +1,35 @@
 services:
   mysql_test:
-    image: mysql:8.0
+    image: mariadb:11.2
     container_name: mysql_test
     environment:
-      MYSQL_ROOT_PASSWORD: test123
-      MYSQL_DATABASE: test_db
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: test
     volumes:
-      - ./__tests__/sql:/docker-entrypoint-initdb.d
+      - ./src/__tests__/sql:/docker-entrypoint-initdb.d
     command: --default-authentication-plugin=mysql_native_password
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ptest123"]
+      test: [ "CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
       interval: 5s
       timeout: 5s
       retries: 20
 
   jest_test:
-    image: node:18
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     container_name: jest_test
     working_dir: /app
     volumes:
       - .:/app
+      - /app/node_modules
+      - ./docker-logs:/root/.npm/_logs
     environment:
       - DB_HOST=mysql_test
       - DB_PORT=3306
       - DB_USER=root
-      - DB_PASSWORD=test123
-      - DB_DATABASE=test_db
+      - DB_PASSWORD=root
+      - DB_DATABASE=test
       - DB_CONNECTION_LIMIT=10
       - DB_QUEUE_LIMIT=0
       - DB_WAIT_FOR_CONNECTIONS=true
@@ -33,8 +37,8 @@ services:
     command: >
       sh -c "
         pnpm install &&
-        pnpm test
+        pnpm test -- --verbose
       "
     depends_on:
       mysql_test:
-        condition: service_healthy 
+        condition: service_healthy
