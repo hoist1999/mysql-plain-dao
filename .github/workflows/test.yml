@@ -37,8 +37,8 @@ jobs:
       
     - name: Run integration tests
       run: |
-        chmod +x ./test.sh
-        ./test.sh
+        chmod +x ./test-in-docker.sh
+        ./test-in-docker.sh
         
     - name: Upload test logs
       if: always()  # even if tests fail, upload logs
