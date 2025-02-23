@@ -41,13 +41,8 @@ jobs:
         ./test.sh
         
     - name: Upload test logs
-<<<<<<< HEAD
-      if: always()  # 即使测试失败也上传日志
-      uses: actions/upload-artifact@v3
-=======
-      if: always()  # Upload logs even if tests fail
-      uses: actions/upload-artifact@v4  # Updated from v3 to v4
->>>>>>> 3db30fd (modify github action.)
+      if: always()  # even if tests fail, upload logs
+      uses: actions/upload-artifact@v4
       with:
         name: test-logs
         path: docker-logs/
