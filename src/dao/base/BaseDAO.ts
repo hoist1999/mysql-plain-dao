@@ -54,7 +54,7 @@ export class BaseDAO<T extends PlainObject> {
         sql: string,
         paras?: ParasType
     ): Promise<T | null> {
-        return await DbUtil.executeGetSingleAsync(sql, paras);
+        return await DbUtil.executeGetSingleAsync<T>(sql, paras);
     }
 
     /** Insert data */
@@ -103,9 +103,9 @@ export class BaseDAO<T extends PlainObject> {
         //     d : 3,
         //     c : 4,
         // }
-        // console.log(Object.keys(obj));
+        // debug(Object.keys(obj));
         // for (var key in obj) {
-        //     console.log({key});
+        //     debug({key});
         // }
     }
 

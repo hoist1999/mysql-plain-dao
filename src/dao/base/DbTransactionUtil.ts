@@ -3,7 +3,7 @@ import { Connection } from "mysql2/promise";
 import { ParasType } from "../Types";
 import { DbUtil } from "./DbUtil";
 
-const debug = debug_func("VCU");
+const debug = debug_func("TEST");
 
 /** Database transaction utility class
  *  @author Assistant 2024
@@ -35,7 +35,7 @@ export class DbTransactionUtil {
      *         return "success";
      *     });
      * 
-     *     console.log("Transaction executed successfully:", result);
+     *     debug("Transaction executed successfully:", result);
      * } catch (error) {
      *     console.error("Transaction execution failed:", error);
      * }

@@ -5,9 +5,11 @@ import mysql from "mysql2/promise";
 import SqlString from "sqlstring";
 import { isNumber, isOkPacket, isRowDataPacketList } from "../TypeGuard";
 import { ParasType } from "../Types";
+
+
 dotenvFlow.config();
 
-const debug = debug_func("VCU");
+const debug = debug_func("TEST");
 
 /** Database CRUD utility class
  *  @author hoist1999
@@ -28,6 +30,16 @@ export class DbUtil {
             if (!process.env.DB_DATABASE) {
                 throw new Error("DB_DATABASE is not set");
             }
+
+            debug({
+                host: process.env.DB_HOST || '127.0.0.1',
+                user: process.env.DB_USER || 'root',
+                password: process.env.DB_PASSWORD,
+                database: process.env.DB_DATABASE,
+                waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true',
+                connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
+                queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '0'),
+            });
 
             this.pool = mysql.createPool({
                 host: process.env.DB_HOST || '127.0.0.1',
@@ -85,20 +97,21 @@ export class DbUtil {
      * Query performs better with many placeholders.
      * Reference: https://github.com/sidorares/node-mysql2/issues/796#issuecomment-397326698
      */
-    static async executeAsync(sql: string, paras?: ParasType) {
+    static async executeAsync<T extends mysql.QueryResult>(sql: string, paras?: ParasType): Promise<[T, mysql.FieldPacket[]]> {
         try {
             debug("=== Executing SQL Query: Execute Method ===");
             debug("sql:", sql);
             debug("paras:", paras);
             const pool = await this.getPool();
-            let result = await pool.query(sql, paras);
+            let result = await pool.query<T>(sql, paras);
+            debug("result:", result);
             return result;
         } catch (error) {
             console.error("=== Error Executing Database Query ===");
             console.error(error);
             console.error("sql:", sql);
             console.error("paras:", paras);
-            return null;
+            throw error;
         }
     }
 
@@ -107,13 +120,11 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<number | null> {
-        const result = await DbUtil.executeAsync(sql, paras);
+        const [result] = await DbUtil.executeAsync<mysql.ResultSetHeader>(sql, paras);
         if (!result) return null;
-        const [rows] = result;
-        if (isOkPacket(rows)) {
-            return rows.insertId;
+        else {
+            return result.insertId;
         }
-        return null;
     }
 
     /** Delete data */
@@ -121,27 +132,24 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<number | null> {
-        const result = await DbUtil.executeAsync(sql, paras);
+        const [result] = await DbUtil.executeAsync<mysql.ResultSetHeader>(sql, paras);
         if (!result) return null;
-        const [rows] = result;
-        if (isOkPacket(rows)) {
-            return rows.affectedRows;
+        {
+            return result.affectedRows;
         }
-        return null;
     }
 
-    /** Update data */
     static async executeUpdateAsync(
         sql: string,
         paras?: ParasType
     ): Promise<number | null> {
-        const result = await DbUtil.executeAsync(sql, paras);
-        if (!result) return null;
-        const [rows] = result;
-        if (isOkPacket(rows)) {
-            return rows.affectedRows;
+        const [result] = await DbUtil.executeAsync<mysql.ResultSetHeader>(sql, paras);
+        if (!result) {
+            return null;
         }
-        return null;
+        else {
+            return result.affectedRows;
+        }
     }
 
     /** Get data collection */
@@ -149,13 +157,13 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<T[]> {
-        const result = await DbUtil.executeAsync(sql, paras);
-        if (!result) return [];
-        const [item_list] = result;
-        if (isRowDataPacketList(item_list)) {
-            return item_list as T[];
+        const [rows] = await DbUtil.executeAsync<mysql.RowDataPacket[]>(sql, paras);
+        if (rows.length > 0) {
+            return rows as Array<T>;
         }
-        return [];
+        else {
+            return [];
+        }
     }
 
     /** Get single row */
@@ -163,18 +171,16 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<T | null> {
-        const result = await DbUtil.executeAsync(sql, paras);
-        if (!result) return null;
-        const [item_list] = result;
-        if (isRowDataPacketList(item_list)) {
-            if (item_list.length === 1) {
-                return item_list[0] as T;
-            } else if (item_list.length === 0) {
-                return null;
-            }
+        const [rows] = await DbUtil.executeAsync<mysql.RowDataPacket[]>(sql, paras);
+        if (rows.length === 0) {
+            return null
+        }
+        else if (rows.length === 1) {
+            return rows[0] as T;
+        }
+        else {
             throw new Error(`Database query returned more than one result, please check SQL: ${sql}`);
         }
-        return null;
     }
 
     /** Get single value */
@@ -182,20 +188,19 @@ export class DbUtil {
         sql: string,
         paras?: ParasType
     ): Promise<string | number | null> {
-        const result = await DbUtil.executeAsync(sql, paras);
-        if (!result) return null;
-        const [item_list, fields] = result;
+        const [rows, fields] = await DbUtil.executeAsync<mysql.RowDataPacket[]>(sql, paras);
 
-        if (isRowDataPacketList(item_list)) {
-            if (item_list.length === 1) {
-                const field_name = fields[0].name;
-                let val = item_list ? item_list[0][field_name] : 0;
-                return val;
-            } else if (item_list.length === 0) {
-                return null;
-            }
+        if (rows.length === 1) {
+            const field_name = fields[0].name;
+            let val = rows[0][field_name] || null
+            return val;
+        } else if (rows.length === 0) {
+            return null;
+        }
+        else if (rows.length > 1) {
             throw new Error(`Database query returned more than one result, please check SQL: ${sql}`);
         }
+
         return null;
     }
 

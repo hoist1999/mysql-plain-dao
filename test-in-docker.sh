@@ -1,4 +1,5 @@
 #!/bin/bash
+# run test in docker container
 
 # Define bold print function
 print_bold() {
@@ -18,7 +19,8 @@ print_green() {
 # Clean up logs directory
 rm -rf ./docker-logs/*
 
-# Get all required images
+# Get all required ima
+ges
 # Extract images from docker-compose.yml
 COMPOSE_IMAGES=$(grep 'image:' docker-compose.yml | awk '{print $2}')
 
@@ -60,7 +62,7 @@ echo "---"
 print_bold "Start the container and run the test"
 
 # Start containers and run tests
-docker-compose up --build --abort-on-container-exit --exit-code-from jest_test
+docker compose up --build --abort-on-container-exit --exit-code-from jest_test
 TEST_RESULT=$?
 
 if [ $TEST_RESULT -ne 0 ]; then
