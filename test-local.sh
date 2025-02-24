@@ -79,4 +79,14 @@ fi
 echo "✨ Database setup complete"
 
 # Run tests
-pnpm test
+# Determine which package manager to use
+if command -v pnpm &> /dev/null; then
+    echo "📦 Using pnpm"
+    pnpm test
+elif command -v npm &> /dev/null; then
+    echo "📦 Using npm"
+    npm test
+else
+    echo "❌ Neither pnpm nor npm is installed"
+    exit 1
+fi
