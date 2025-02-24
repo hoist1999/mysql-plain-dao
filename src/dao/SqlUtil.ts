@@ -1,8 +1,7 @@
 import sqlstring from "sqlstring";
 import { OrderBy, SortCondition } from "./Types";
 
-/** 用于构造SQL语句的工具类
- *  @author hoist1999
+/** Utility class for constructing SQL statements
  */
 export class SqlUtil {
   static like(field: string, condition_value: string) {
@@ -12,7 +11,7 @@ export class SqlUtil {
     return like_str;
   }
 
-  static equal(field: string, condition_value: string| number) {
+  static equal(field: string, condition_value: string | number) {
     const like_str = `${sqlstring.escapeId(field)} = ${sqlstring.escape(
       condition_value
     )}`;
@@ -27,9 +26,9 @@ export class SqlUtil {
   }
 
   /**
-   * 获得Limit: 使用分页
-   * @param current 当前页面，从1开始
-   * @param pageSize 页面的大小
+   * Get LIMIT clause for pagination
+   * @param current Current page number (starting from 1)
+   * @param pageSize Number of items per page
    */
   static limitPager(current: number | string, pageSize: number | string) {
     const currentInt =
@@ -42,9 +41,9 @@ export class SqlUtil {
   }
 
   /**
-   * 获得Limit
-   * @param start 数据开始行，从0开始
-   * @param length 返回的数据行数
+   * Get LIMIT clause
+   * @param start Starting row index (starting from 0)
+   * @param length Number of rows to return
    */
   static limit(start: number | string, length: number | string) {
     const startInt = typeof start === "string" ? parseInt(start) : start;
@@ -53,17 +52,17 @@ export class SqlUtil {
     return pager_sql;
   }
 
-  //获得排序的SQL
+  // Get ORDER BY clause
   static orderBy(conditions: SortCondition | string) {
     if (typeof conditions === "string") {
       return conditions;
     } else {
-      //如果需要排序，那么添加排序的条件
+      // Add sorting conditions if needed
       const { order = OrderBy.ASC, field = "" } = conditions;
       let order_sql = "";
       if (order && field) {
         let escape_field = sqlstring.escape(field);
-        escape_field = escape_field.substring(1, escape_field.length - 1); //去掉两侧的单引号
+        escape_field = escape_field.substring(1, escape_field.length - 1); // Remove surrounding quotes
 
         order_sql = ` ORDER BY ${escape_field} `;
         if (order === OrderBy.DESC) {

@@ -20,7 +20,7 @@ export class DatabaseError extends Error {
 
 export type QueryResult<T> = T extends Array<infer U> ? U[] : T;
 
-// 在文件开头添加新的类型定义
+// Type definitions for database configuration
 interface ConnectionConfig {
     host?: string;
     port?: number;
@@ -99,7 +99,7 @@ export class DbUtil {
                 port: parseInt(url.port || '3306'),
                 user: url.username,
                 password: url.password,
-                database: url.pathname.slice(1), // Remove leading '/'
+                database: url.pathname.slice(1), // Remove leading slash from pathname
             };
         }
 
@@ -115,8 +115,8 @@ export class DbUtil {
 
     /** 
      * Get connection pool
-     * Database configuration is set in .env .env.test .env.production files
-    */
+     * Database configuration is loaded from environment files (.env, .env.test, .env.production)
+     */
     static async getPool() {
         if (!this.pool) {
             if (!this.options) {
@@ -144,7 +144,7 @@ export class DbUtil {
         return this.pool;
     }
 
-    /** Release connection pool */
+    /** Release the database connection pool */
     static async relaseConnectionPoolAsync() {
         if (this.pool) {
             await this.pool.end();
@@ -196,7 +196,7 @@ export class DbUtil {
         }
     }
 
-    /** Insert data */
+    /** Insert data and return the inserted ID */
     static async executeInsertAsync(
         sql: string,
         paras?: ParasType
@@ -208,7 +208,7 @@ export class DbUtil {
         }
     }
 
-    /** Delete data */
+    /** Delete data and return the number of affected rows */
     static async executeDeleteAsync(
         sql: string,
         paras?: ParasType
@@ -220,6 +220,7 @@ export class DbUtil {
         }
     }
 
+    /** Update data and return the number of affected rows */
     static async executeUpdateAsync(
         sql: string,
         paras?: ParasType
@@ -233,7 +234,7 @@ export class DbUtil {
         }
     }
 
-    /** Get data collection */
+    /** Get a list of records matching the query */
     static async executeGetListAsync<T extends Record<string, any>>(
         sql: string,
         paras?: ParasType
@@ -242,7 +243,7 @@ export class DbUtil {
         return (rows.length > 0 ? rows : []) as QueryResult<T[]>;
     }
 
-    /** Get single row */
+    /** Get a single record matching the query */
     static async executeGetSingleAsync<T>(
         sql: string,
         paras?: ParasType
@@ -259,7 +260,7 @@ export class DbUtil {
         }
     }
 
-    /** Get single value */
+    /** Get a single value from the first column of the first row */
     static async executeGetValueAsync(
         sql: string,
         paras?: ParasType
@@ -308,8 +309,12 @@ export class DbUtil {
         }
     }
 
-    // MariaDB doesn't have a native JSON type, only LONGTEXT, so manual parsing is needed
-    // Both data and field_name_data can accept single items or arrays
+    /**
+     * Parse JSON data stored as LONGTEXT in MariaDB
+     * @param data Single record or array of records containing JSON fields
+     * @param field_name_data Field name(s) containing JSON data
+     * @returns Parsed record(s) with JSON fields
+     */
     static parseJson(
         data: Record<string, any> | Array<Record<string, any>>,
         field_name_data: string | string[] = "json_data"
@@ -355,7 +360,7 @@ export class DbUtil {
 
     /**
      * Get total count of results
-     * @param sql e.g., SELECT count(*) AS total FROM ...
+     * @param sql SQL query that returns a count (e.g., SELECT count(*) AS total FROM ...)
      */
     static async getTotalAsync(sql: string): Promise<number> {
         let total = await DbUtil.executeGetNumberAsync(sql);

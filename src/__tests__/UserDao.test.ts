@@ -135,7 +135,7 @@ describe('UserDao', () => {
                 is_active: false,
                 role: 'admin' as const,
                 last_login: new Date(),
-                updated_at: new Date()  // 手动设置更新时间
+                updated_at: new Date()  // Manually set update time
             };
 
             await userDao.updateAsync(updatedData);
@@ -171,7 +171,7 @@ describe('UserDao', () => {
                 ...insertedUser,
                 username: 'updated_by_uuid',
                 email: 'updated_uuid@example.com',
-                updated_at: new Date()  // 手动设置更新时间
+                updated_at: new Date()  // Manually set update time
             };
 
             await userDao.updateByUuidAsync(updatedData);

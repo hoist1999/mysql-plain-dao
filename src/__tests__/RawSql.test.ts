@@ -29,10 +29,10 @@ describe('Simple SQL CRUD Tests', () => {
 
     // Helper function: Create user with required fields
     async function createTestUser(userData: Partial<User>): Promise<mysql.ResultSetHeader> {
-        const uuid = crypto.randomUUID(); // 需要导入 crypto
+        const uuid = crypto.randomUUID(); // Requires crypto import
         const defaultData = {
             uuid,
-            password_hash: 'hashed_password', // 实际应用中应该使用proper hash
+            password_hash: 'hashed_password', // Should use proper hashing in production
             is_active: true,
             role: 'user' as const
         };

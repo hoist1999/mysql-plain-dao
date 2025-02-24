@@ -1,4 +1,4 @@
-import { OkPacket, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 // https://dev.to/ankittanna/how-to-create-a-type-for-complex-json-object-in-typescript-d81
 export type JSONValue =
@@ -15,7 +15,7 @@ export interface PagerCondition {
 
 export type ParasType = any | any[] | { [param: string]: any };
 
-export type ResultType = RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader;
+export type ResultType = RowDataPacket[][] | RowDataPacket[] | ResultSetHeader | ResultSetHeader[] | ResultSetHeader;
 
 export type Primitive =
     | bigint

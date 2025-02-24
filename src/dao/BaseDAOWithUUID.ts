@@ -5,7 +5,6 @@ import { DbUtil } from "./DbUtil";
 
 /** Base class for all DAO layers with UUID support
  * Extends basic CRUD capabilities by adding UUID column for enhanced data security
- * @author hoist1999
  */
 export class BaseDAOWithUUID<T extends PlainObject> extends BaseDAO<T> {
 	constructor(option: Option) {
