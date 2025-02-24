@@ -1,4 +1,4 @@
-import { BaseDAOWithUUID } from '../dao/base/BaseDAOWithUUID';
+import { BaseDAOWithUUID } from '../dao/BaseDAOWithUUID';
 import { User } from './User';
 
 export class UserDao extends BaseDAOWithUUID<User> {

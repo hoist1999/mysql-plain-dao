@@ -1,5 +1,5 @@
 import SqlString from "sqlstring";
-import { InsertModel, PlainObject } from "../Types";
+import { InsertModel, PlainObject } from "./Types";
 import { BaseDAO, Option } from "./BaseDAO";
 import { DbUtil } from "./DbUtil";
 

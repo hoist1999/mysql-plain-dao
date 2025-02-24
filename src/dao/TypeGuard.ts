@@ -1,6 +1,6 @@
 import debug_func from "debug";
 import { ResultSetHeader, RowDataPacket } from "mysql2/promise";
-const debug = debug_func("TEST");
+const debug = debug_func("DAO");
 
 // type guard: https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates
 /** 判断是否为OkPacket类型 */

@@ -1,21 +1,117 @@
 import debug_func from "debug";
-import dotenvFlow from 'dotenv-flow';
-import { isString } from "lodash";
+import { isNumber, isString } from "lodash";
 import mysql from "mysql2/promise";
 import SqlString from "sqlstring";
-import { isNumber, isOkPacket, isRowDataPacketList } from "../TypeGuard";
-import { ParasType } from "../Types";
+import { ParasType } from "./Types";
 
+const debug = debug_func("DAO");
 
-dotenvFlow.config();
+export class DatabaseError extends Error {
+    constructor(
+        message: string,
+        public sql?: string,
+        public params?: ParasType,
+        public originalError?: Error
+    ) {
+        super(message);
+        this.name = 'DatabaseError';
+    }
+}
 
-const debug = debug_func("TEST");
+export type QueryResult<T> = T extends Array<infer U> ? U[] : T;
+
+// 在文件开头添加新的类型定义
+interface ConnectionConfig {
+    host?: string;
+    port?: number;
+    user?: string;
+    password?: string;
+    database?: string;
+}
+
+interface PoolConfig {
+    min?: number;
+    max?: number;
+    waitForConnections?: boolean;
+    queueLimit?: number;
+}
+
+interface DatabaseOptions {
+    connection: ConnectionConfig | string;
+    pool?: PoolConfig;
+    debug?: boolean;
+    decimalNumbers?: boolean;
+    namedPlaceholders?: boolean;
+}
 
 /** Database CRUD utility class
  *  @author hoist1999
  */
 export class DbUtil {
     private static pool: mysql.Pool | null = null;
+    private static options: DatabaseOptions;
+
+    /**
+     * Initialize database connection
+     * @example
+     * ```typescript
+     * // Using connection string
+     * DbUtil.initialize({
+     *   connection: 'mysql://user:pass@localhost:3306/db_name'
+     * });
+     * 
+     * // Using connection config
+     * DbUtil.initialize({
+     *   connection: {
+     *     host: 'localhost',
+     *     user: 'root',
+     *     password: 'password',
+     *     database: 'db_name'
+     *   },
+     *   pool: {
+     *     min: 2,
+     *     max: 10
+     *   }
+     * });
+     * ```
+     */
+    static initialize(options: DatabaseOptions) {
+        this.options = {
+            debug: false,
+            decimalNumbers: true,
+            namedPlaceholders: true,
+            ...options,
+        };
+
+        // Reset pool if exists
+        if (this.pool) {
+            this.pool.end();
+            this.pool = null;
+        }
+    }
+
+    private static parseConnectionConfig(config: ConnectionConfig | string): mysql.PoolOptions {
+        if (typeof config === 'string') {
+            // Parse connection URL
+            const url = new URL(config);
+            return {
+                host: url.hostname,
+                port: parseInt(url.port || '3306'),
+                user: url.username,
+                password: url.password,
+                database: url.pathname.slice(1), // Remove leading '/'
+            };
+        }
+
+        return {
+            host: config.host || '127.0.0.1',
+            port: config.port || 3306,
+            user: config.user || 'root',
+            password: config.password,
+            database: config.database,
+        };
+    }
+
 
     /** 
      * Get connection pool
@@ -23,43 +119,27 @@ export class DbUtil {
     */
     static async getPool() {
         if (!this.pool) {
-            if (!process.env.DB_PASSWORD) {
-                throw new Error("DB_PASSWORD is not set");
+            if (!this.options) {
+                throw new DatabaseError("Database not initialized. Call initialize() first");
             }
 
-            if (!process.env.DB_DATABASE) {
-                throw new Error("DB_DATABASE is not set");
+            const connection = this.parseConnectionConfig(this.options.connection);
+            const pool = this.options.pool || {};
+
+            const poolConfig: mysql.PoolOptions = {
+                ...connection,
+                waitForConnections: pool.waitForConnections ?? true,
+                connectionLimit: pool.max ?? 10,
+                queueLimit: pool.queueLimit ?? 0,
+                decimalNumbers: this.options.decimalNumbers,
+                namedPlaceholders: this.options.namedPlaceholders,
+            };
+
+            if (this.options.debug) {
+                debug('Pool configuration:', poolConfig);
             }
 
-            debug({
-                host: process.env.DB_HOST || '127.0.0.1',
-                user: process.env.DB_USER || 'root',
-                password: process.env.DB_PASSWORD,
-                database: process.env.DB_DATABASE,
-                waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true',
-                connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
-                queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '0'),
-            });
-
-            this.pool = mysql.createPool({
-                host: process.env.DB_HOST || '127.0.0.1',
-                user: process.env.DB_USER || 'root',
-                password: process.env.DB_PASSWORD,
-                database: process.env.DB_DATABASE,
-                waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true',
-                connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
-                queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '0'),
-
-                // timezone: "+08:00",
-
-                // Enable this option to convert decimal data type to number (float)
-                // https://github.com/sidorares/node-mysql2/blob/bc280518b4bac3212ecfe48c20955354fff38aa6/documentation/Readme.md#known-incompatibilities-with-node-mysql
-                decimalNumbers: true,
-
-                // https://github.com/sidorares/node-mysql2/blob/07a429d9765dcbb24af4264654e973847236e0de/documentation/Extras.md
-                // Enable named parameter support: connection.execute('select :x + :y as z', { x: 1, y: 2 })
-                namedPlaceholders: true,
-            });
+            this.pool = mysql.createPool(poolConfig);
         }
         return this.pool;
     }
@@ -84,11 +164,11 @@ export class DbUtil {
             let result = await pool.query(sql, paras);
             return result;
         } catch (error) {
-            debug("=== Error Executing Database Query ===");
-            debug("sql:", sql);
-            debug("paras:", paras);
-            debug("Error: ", error);
-            return null;
+            console.error("=== Error Executing Database Query ===");
+            console.error(error);
+            console.error("sql:", sql);
+            console.error("paras:", paras);
+            throw error;
         }
     }
 
@@ -107,11 +187,12 @@ export class DbUtil {
             debug("result:", result);
             return result;
         } catch (error) {
-            console.error("=== Error Executing Database Query ===");
-            console.error(error);
-            console.error("sql:", sql);
-            console.error("paras:", paras);
-            throw error;
+            throw new DatabaseError(
+                'Database query execution failed',
+                sql,
+                paras,
+                error instanceof Error ? error : undefined
+            );
         }
     }
 
@@ -153,17 +234,12 @@ export class DbUtil {
     }
 
     /** Get data collection */
-    static async executeGetListAsync<T>(
+    static async executeGetListAsync<T extends Record<string, any>>(
         sql: string,
         paras?: ParasType
-    ): Promise<T[]> {
+    ): Promise<QueryResult<T[]>> {
         const [rows] = await DbUtil.executeAsync<mysql.RowDataPacket[]>(sql, paras);
-        if (rows.length > 0) {
-            return rows as Array<T>;
-        }
-        else {
-            return [];
-        }
+        return (rows.length > 0 ? rows : []) as QueryResult<T[]>;
     }
 
     /** Get single row */
@@ -323,5 +399,34 @@ export class DbUtil {
             }
         }
         return null;
+    }
+
+    static async withTransaction<T>(
+        callback: (connection: mysql.PoolConnection) => Promise<T>
+    ): Promise<T> {
+        const pool = await this.getPool();
+        const connection = await pool.getConnection();
+
+        try {
+            await connection.beginTransaction();
+            const result = await callback(connection);
+            await connection.commit();
+            return result;
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+    /**
+     * Create a new instance with specific configuration
+     * Useful for managing multiple database connections
+     */
+    static createInstance(options: DatabaseOptions): typeof DbUtil {
+        const NewDbUtil = class extends DbUtil { };
+        NewDbUtil.initialize(options);
+        return NewDbUtil;
     }
 }

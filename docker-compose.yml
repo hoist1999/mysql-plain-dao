@@ -33,7 +33,7 @@ services:
       - DB_CONNECTION_LIMIT=10
       - DB_QUEUE_LIMIT=0
       - DB_WAIT_FOR_CONNECTIONS=true
-      - DEBUG=VCU:*
+      - DEBUG=DAO
       - NODE_ENV=test-docker
       - DOCKER_CLIENT_TIMEOUT=300
       - COMPOSE_HTTP_TIMEOUT=300

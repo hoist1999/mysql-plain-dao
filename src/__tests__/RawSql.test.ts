@@ -1,10 +1,7 @@
 import crypto from 'crypto';
-import dotenvFlow from 'dotenv-flow';
 import mysql from 'mysql2/promise';
-import { getDBConfig } from './DbConfig';
+import { getDbConfigFromEnv } from '../dao/DbConfigLoader';
 import { User } from './User';
-import { loadEnvConfigAsync } from './CurrentTestUtils';
-dotenvFlow.config();
 
 /**
  * Integration tests for direct database operations
@@ -17,8 +14,7 @@ describe('Simple SQL CRUD Tests', () => {
     let connection: mysql.Connection;
 
     beforeAll(async () => {
-        await loadEnvConfigAsync();
-        connection = await mysql.createConnection(getDBConfig());
+        connection = await mysql.createConnection(getDbConfigFromEnv());
     });
 
     afterAll(async () => {
@@ -179,7 +175,7 @@ describe('Simple SQL CRUD Tests', () => {
 
     test('should verify mysql_test container is accessible', async () => {
         // Test database connection configuration
-        const config = getDBConfig();
+        const config = getDbConfigFromEnv();
 
         try {
             // Attempt to connect to database

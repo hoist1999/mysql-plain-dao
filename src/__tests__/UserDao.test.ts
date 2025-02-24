@@ -1,18 +1,22 @@
 import debug_func from "debug";
-import { DbUtil } from '../dao/base/DbUtil';
+import { DbUtil } from '../dao/DbUtil';
 import { InsertModel } from '../dao/Types';
-import { loadEnvConfigAsync } from "./CurrentTestUtils";
 import { User } from './User';
 import { UserDao } from './UserDao';
+import { getDbConfigFromEnv } from "../dao/DbConfigLoader";
 
-const debug = debug_func("TEST");
+const debug = debug_func("DAO");
 
 describe('UserDao', () => {
     let userDao: UserDao;
     let testUser: InsertModel<User>;
 
     beforeAll(async () => {
-        await loadEnvConfigAsync();
+        await DbUtil.initialize({
+            connection: getDbConfigFromEnv(),
+            debug: process.env.NODE_ENV === 'development'
+        });
+
         userDao = new UserDao();
     });
 

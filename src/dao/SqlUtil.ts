@@ -1,5 +1,5 @@
 import sqlstring from "sqlstring";
-import { OrderBy, SortCondition } from "../Types";
+import { OrderBy, SortCondition } from "./Types";
 
 /** 用于构造SQL语句的工具类
  *  @author hoist1999

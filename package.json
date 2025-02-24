@@ -13,8 +13,8 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "NODE_ENV=test-local DEBUG=VCU jest",
-    "test-in-docker": "NODE_ENV=test-in-docker DEBUG=TEST jest",
+    "test": "NODE_ENV=test-local DEBUG=-DAO jest --runInBand",
+    "test-in-docker": "NODE_ENV=test-in-docker DEBUG=-DAO jest --runInBand",
     "prepublishOnly": "pnpm build",
     "version:patch": "npm version patch",
     "version:minor": "npm version minor",

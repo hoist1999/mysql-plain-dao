@@ -1,5 +1,5 @@
 import SqlString from "sqlstring";
-import { InsertModel, ParasType, PlainObject, SortCondition } from "../Types";
+import { InsertModel, ParasType, PlainObject, SortCondition } from "./Types";
 import { DbUtil } from "./DbUtil";
 import { SqlUtil } from "./SqlUtil";
 
