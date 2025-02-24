@@ -2,6 +2,8 @@
 
 A TypeScript-first tool for generating data model objects from existing MySQL databases. It also provides a library of utilities to simplify database access operations.
 
+## Warning
+> ⚠️ **Warning**: This package is still under active development and the API is not yet stable. Please do not use it in production environments.
 
 ## Inspired by
 
@@ -18,7 +20,7 @@ This project was inspired by [schemats](https://github.com/SweetIQ/schemats). So
 ## Installation
 
 ```bash
-pnpm add mysql-plain-dao
+npm i mysql-plain-dao
 ```
 
 ## Usage
@@ -221,3 +223,4 @@ DEBUG=* npm test
 ## License
 
 MIT
+
