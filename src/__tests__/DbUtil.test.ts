@@ -16,44 +16,10 @@ interface User {
 
 describe('DbUtil Tests', () => {
     describe('Initialization', () => {
-        // afterEach(async () => {
-        //     // Clean up after each initialization test
-        //     await DbUtil.relaseConnectionPoolAsync();
-        // });
-
         it('should initialize with connection string', async () => {
             const dbConfig = getDbConfigFromEnv();
             const connectionString = `mysql://${dbConfig.user}:${dbConfig.password}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`;
-
-            DbUtil.initialize({
-                connection: connectionString,
-                pool: {
-                    max: dbConfig.connectionLimit,
-                    queueLimit: dbConfig.queueLimit,
-                    waitForConnections: dbConfig.waitForConnections
-                },
-                debug: process.env.NODE_ENV === 'development'
-            });
-
-            const result = await DbUtil.executeGetSingleAsync<{ value: number }>('SELECT 1 as value');
-            expect(result).toBeTruthy();
-            expect(result?.value).toBe(1);
-
-            // clean up
-            await DbUtil.relaseConnectionPoolAsync();
-        });
-
-        it('should initialize with connection config', async () => {
-            const dbConfig = getDbConfigFromEnv();
-            DbUtil.initialize({
-                connection: getDbConfigFromEnv(),
-                pool: {
-                    max: dbConfig.connectionLimit,
-                    queueLimit: dbConfig.queueLimit,
-                    waitForConnections: dbConfig.waitForConnections
-                },
-                debug: process.env.NODE_ENV === 'development'
-            });
+            DbUtil.initialize({ uri: connectionString });
 
             // Test the connection
             const result = await DbUtil.executeGetSingleAsync<{ value: number }>(
@@ -64,20 +30,32 @@ describe('DbUtil Tests', () => {
             expect(result?.value).toBe(1);
 
             // clean up
-            await DbUtil.relaseConnectionPoolAsync();
+            await DbUtil.endPoolAsync();
+        });
+
+        it('should initialize with connection config', async () => {
+            DbUtil.initialize(getDbConfigFromEnv());
+
+            // Test the connection
+            const result = await DbUtil.executeGetSingleAsync<{ value: number }>(
+                'SELECT 1 as value'
+            );
+
+            expect(result).toBeTruthy();
+            expect(result?.value).toBe(1);
+
+            // clean up
+            await DbUtil.endPoolAsync();
         });
     });
 
     describe('CRUD Operations', () => {
         beforeAll(async () => {
-            await DbUtil.initialize({
-                connection: getDbConfigFromEnv(),
-                debug: process.env.NODE_ENV === 'development'
-            });
+            await DbUtil.initialize(getDbConfigFromEnv());
         });
 
         afterAll(async () => {
-            await DbUtil.relaseConnectionPoolAsync();
+            await DbUtil.endPoolAsync();
         });
 
         const testUser: User = {

@@ -200,8 +200,9 @@ export class BaseDAO<T extends PlainObject> {
 
         // Get total count
         let sql_total = ` SELECT count(*) AS total FROM ${this.option.table_name} ${where_str} `;
-        let total = await DbUtil.getTotalAsync(sql_total);
+        let total = await DbUtil.executeGetNumberAsync(sql_total) ?? 0;
 
         return { list, total };
     }
+
 }

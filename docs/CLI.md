@@ -2,42 +2,52 @@
 
 This document describes the command line interface for mysql-plain-dao.
 
-## Usage
+## Common Usage Examples
 
-The tool can be used via CLI in three ways:
+Here are some common examples of how to use the CLI:
 
-### 1. Using Command Line Arguments
-
+### 1. Generate interface for a single table:
 ```bash
 npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/users.ts
 ```
 
-### 2. Using Environment Variables
+* `npx mysql-plain-dao` means using `npx` to run the executable tool in the _mysql-plain-dao_ package.
+
+* `generate` is a subcommand of the tool, which is used to generate corresponding typescript type files and DAO class files from an existing database.
+
+* `-c mysql://user:pass@localhost:3306/dbname` indicates database connection
+
+* `-t users` indicates the table name to be generated. `users` is a table name used for examples.
+
+* `-o src/models/users.ts` indicates the output file path
+
+### 2. Generate interfaces for multiple tables
 
 ```bash
-SCHEMATS_CONN=mysql://user:pass@localhost:3306/dbname \
-SCHEMATS_TABLE=users \
-SCHEMATS_OUTPUT=src/models/users.ts \
-npx mysql-plain-dao generate
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/index.ts
 ```
 
-### 3. Using Configuration File
+Here, `-t users` and `-t products` means generating these two data tables at the same time.
 
+
+### 3. Generate interfaces with camelCase column names:
 ```bash
-npx mysql-plain-dao generate --config schemats.json
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -C -o src/models/users.ts
 ```
 
-Example `schemats.json`:
-```json
-{
-  "conn": "mysql://user:pass@localhost:3306/dbname",
-  "table": ["users", "products"],
-  "output": "src/models/index.ts",
-  "camelCase": true,
-  "schema": "public",
-  "noHeader": false
-}
-```
+* `-C` or `--camelCase` option will convert database column names from snake_case to camelCase in the generated TypeScript interfaces
+* For example:
+  - Database column: `user_id` -> TypeScript property: `userId`
+  - Database column: `created_at` -> TypeScript property: `createdAt`
+  - Database column: `first_name` -> TypeScript property: `firstName`
+
+### 4. Generate interfaces with camelCase for all tables:
+```bash
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -C -o src/models/index.ts
+``` 
+
+The command will generate type files for all data tables because the `-t` option is not provided here.
+
 
 ## Command Line Options
 
@@ -51,7 +61,44 @@ Example `schemats.json`:
 | --noHeader | - | Skip writing file header comment | No | false |
 | --config | - | Path to configuration file | No | schemats.json |
 
-## Environment Variables
+
+
+## Using Configuration File
+
+All command line options can be specified in a configuration file. This is particularly useful when you need to reuse the same settings multiple times or manage complex configurations.
+
+For example, create a `schemas.json` configuration file in the project root directory:
+
+```json
+{
+  "conn": "mysql://user:pass@localhost:3306/dbname",
+  "table": ["users", "products"],
+  "output": "src/models/index.ts",
+  "camelCase": true,
+  "schema": "public",
+  "noHeader": false
+}
+```
+
+Then run the command line tool:
+
+```bash
+npx mysql-plain-dao generate --config schemats.json
+```
+
+This will have the same effect as running the command with individual options:
+
+```bash
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/index.ts -C
+```
+
+
+## Using Environment Variables
+
+Environment variables provide a secure and flexible way to configure the tool, especially useful in:
+- CI/CD pipelines where sensitive information should not be exposed in command line arguments
+- Docker containers and cloud environments
+- Development workflows where you switch between different configurations
 
 All options can be set using environment variables with the `SCHEMATS_` prefix:
 
@@ -65,24 +112,13 @@ All options can be set using environment variables with the `SCHEMATS_` prefix:
 | SCHEMATS_NO_HEADER | Skip writing file header comment | false |
 | SCHEMATS_CONFIG | Path to configuration file | schemats.json |
 
-## Examples
+### Example
 
-1. Generate interface for a single table:
 ```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/users.ts
+SCHEMATS_CONN=mysql://user:pass@localhost:3306/dbname \
+SCHEMATS_TABLE=users \
+SCHEMATS_OUTPUT=src/models/users.ts \
+npx mysql-plain-dao generate
 ```
 
-2. Generate interfaces for multiple tables:
-```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/index.ts
-```
-
-3. Generate interfaces with camelCase column names:
-```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -C -o src/models/users.ts
-```
-
-4. Generate interfaces with camelCase for all tables:
-```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -C -o src/models/index.ts
-``` 
+This approach is equivalent to using command line arguments but offers better security and maintainability.

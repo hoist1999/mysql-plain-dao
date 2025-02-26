@@ -1,7 +1,6 @@
 import debug_func from "debug";
 import { isNumber, isString } from "lodash";
 import mysql from "mysql2/promise";
-import SqlString from "sqlstring";
 import { ParasType } from "./Types";
 
 const debug = debug_func("DAO");
@@ -20,148 +19,126 @@ export class DatabaseError extends Error {
 
 export type QueryResult<T> = T extends Array<infer U> ? U[] : T;
 
-// Type definitions for database configuration
-interface ConnectionConfig {
-    host?: string;
-    port?: number;
-    user?: string;
-    password?: string;
-    database?: string;
-}
-
-interface PoolConfig {
-    min?: number;
-    max?: number;
-    waitForConnections?: boolean;
-    queueLimit?: number;
-}
-
-interface DatabaseOptions {
-    connection: ConnectionConfig | string;
-    pool?: PoolConfig;
-    debug?: boolean;
-    decimalNumbers?: boolean;
-    namedPlaceholders?: boolean;
-}
-
-/** Database CRUD utility class
- *  @author hoist1999
+/** 
+ * Database CRUD utility class for MySQL/MariaDB
+ * Provides connection pooling and type-safe database operations
  */
 export class DbUtil {
     private static pool: mysql.Pool | null = null;
-    private static options: DatabaseOptions;
+    private static options: mysql.PoolOptions;
+    //default options
+    private static defaultOptions: mysql.PoolOptions = {
+        //enable named placeholders
+        namedPlaceholders: true
+    }
 
     /**
-     * Initialize database connection
-     * @example
-     * ```typescript
-     * // Using connection string
-     * DbUtil.initialize({
-     *   connection: 'mysql://user:pass@localhost:3306/db_name'
-     * });
+     * Initialize database connection pool
+     * Supports both connection URI string and PoolOptions object
      * 
-     * // Using connection config
+     * @example Using connection URI
+     * ```typescript
+     * DbUtil.initialize({ uri: 'mysql://user:pass@localhost:3306/db_name' });
+     * ```
+     * 
+     * @example Using PoolOptions
+     * ```typescript
      * DbUtil.initialize({
-     *   connection: {
-     *     host: 'localhost',
-     *     user: 'root',
-     *     password: 'password',
-     *     database: 'db_name'
-     *   },
-     *   pool: {
-     *     min: 2,
-     *     max: 10
-     *   }
+     *   host: 'localhost',
+     *   user: 'root',
+     *   password: 'password',
+     *   database: 'db_name',
+     *   connectionLimit: 10,
+     *   queueLimit: 0
      * });
      * ```
+     * 
+     * Default options:
+     * - connectionLimit: 10
+     * - queueLimit: 0
+     * - waitForConnections: true
+     * - decimalNumbers: true (converts MySQL DECIMAL to JS number)
+     * - namedPlaceholders: true (enables :name style parameters)
      */
-    static initialize(options: DatabaseOptions) {
-        this.options = {
-            debug: false,
-            decimalNumbers: true,
-            namedPlaceholders: true,
-            ...options,
-        };
-
-        // Reset pool if exists
-        if (this.pool) {
-            this.pool.end();
-            this.pool = null;
-        }
+    static initialize(config: mysql.PoolOptions): void {
+        this.options = config;
+        this.getPool();
     }
 
-    private static parseConnectionConfig(config: ConnectionConfig | string): mysql.PoolOptions {
-        if (typeof config === 'string') {
-            // Parse connection URL
-            const url = new URL(config);
-            return {
-                host: url.hostname,
-                port: parseInt(url.port || '3306'),
-                user: url.username,
-                password: url.password,
-                database: url.pathname.slice(1), // Remove leading slash from pathname
-            };
-        }
-
-        return {
-            host: config.host || '127.0.0.1',
-            port: config.port || 3306,
-            user: config.user || 'root',
-            password: config.password,
-            database: config.database,
-        };
-    }
-
-
-    /** 
-     * Get connection pool
-     * Database configuration is loaded from environment files (.env, .env.test, .env.production)
+    /**
+     * Get the database connection pool
+     * @returns The database connection pool
      */
-    static async getPool() {
+    static getPool(): mysql.Pool {
         if (!this.pool) {
-            if (!this.options) {
-                throw new DatabaseError("Database not initialized. Call initialize() first");
+            const currentOptions = {
+                ...this.defaultOptions,
+                ...this.options,
             }
-
-            const connection = this.parseConnectionConfig(this.options.connection);
-            const pool = this.options.pool || {};
-
-            const poolConfig: mysql.PoolOptions = {
-                ...connection,
-                waitForConnections: pool.waitForConnections ?? true,
-                connectionLimit: pool.max ?? 10,
-                queueLimit: pool.queueLimit ?? 0,
-                decimalNumbers: this.options.decimalNumbers,
-                namedPlaceholders: this.options.namedPlaceholders,
-            };
-
-            if (this.options.debug) {
-                debug('Pool configuration:', poolConfig);
-            }
-
-            this.pool = mysql.createPool(poolConfig);
+            this.pool = mysql.createPool(currentOptions);
         }
         return this.pool;
     }
 
-    /** Release the database connection pool */
-    static async relaseConnectionPoolAsync() {
+    /**
+     * Get a database connection from the pool
+     */
+    static async getConnection(): Promise<mysql.PoolConnection> {
+        return await this.getPool().getConnection();
+    }
+
+    /** Release all connections and end the pool */
+    static async endPoolAsync() {
         if (this.pool) {
             await this.pool.end();
-            this.pool = null; // Clear pool reference
+            this.pool = null;
         }
     }
 
-    /** Execute using query method, sends to MySQL using TEXT protocol.
-     * No internal preparation,
-     * Advantageous when executing very large SQL statements. */
+    /** Execute SQL using TEXT protocol without prepared statements.
+     * 
+     * @description
+     * - Uses MySQL TEXT protocol (simple query)
+     * - No prepared statements, performs direct query execution
+     * - Better performance for:
+     *   - Very large SQL statements
+     *   - Queries with many parameters
+     *   - One-time query execution
+     * - Less protection against SQL injection compared to executeAsync()
+     * 
+     * @example
+     * ```typescript
+     * // Basic SELECT query
+     * const [rows] = await DbUtil.queryAsync(
+     *   'SELECT * FROM large_table WHERE status = "active"'
+     * );
+     * 
+     * // Complex query with multiple JOINs
+     * const [rows] = await DbUtil.queryAsync(`
+     *   SELECT u.*, p.*, a.*
+     *   FROM users u
+     *   LEFT JOIN profiles p ON u.id = p.user_id
+     *   LEFT JOIN addresses a ON u.id = a.user_id
+     *   WHERE u.status = ? AND p.verified = ?
+     * `, ['active', true]);
+     * 
+     * // Bulk INSERT
+     * const values = users.map(u => `('${u.name}', '${u.email}')`).join(',');
+     * const [result] = await DbUtil.queryAsync(`
+     *   INSERT INTO users (name, email) VALUES ${values}
+     * `);
+     * ```
+     */
     static async queryAsync(sql: string, paras?: ParasType) {
         try {
             debug("=== Executing SQL Query: Query Method ===");
             debug("sql:", sql);
             debug("paras:", paras);
-            const pool = await this.getPool();
-            let result = await pool.query(sql, paras);
+            const conn = await this.getConnection();
+            let result = await conn.query(sql, paras);
+            // Return the connection back to the pool
+            // This is crucial to prevent connection leaks and pool exhaustion
+            conn.release();
             return result;
         } catch (error) {
             console.error("=== Error Executing Database Query ===");
@@ -172,21 +149,67 @@ export class DbUtil {
         }
     }
 
-    /** Execute using execute method, sends to MySQL using binary protocol with prepared statements.
-     * Similar performance to query with few placeholders, advantageous for repeated SQL execution.
-     * Query performs better with many placeholders.
-     * Reference: https://github.com/sidorares/node-mysql2/issues/796#issuecomment-397326698
+    /** Execute SQL using binary protocol with prepared statements.
+     * 
+     * @description
+     * - Uses MySQL binary protocol with prepared statements
+     * - Provides strong SQL injection protection
+     * - Better performance for:
+     *   - Repeated execution of the same SQL
+     *   - Queries with few parameters
+     *   - When parameter values contain special characters
+     * - Automatically handles parameter escaping
+     * 
+     * @see {@link https://github.com/sidorares/node-mysql2/issues/796#issuecomment-397326698}
+     * 
+     * @example
+     * ```typescript
+     * // Basic SELECT with placeholder
+     * const [rows] = await DbUtil.executeAsync<UserRow[]>(
+     *   'SELECT * FROM users WHERE id = ?',
+     *   [userId]
+     * );
+     * 
+     * // INSERT with named parameters
+     * const [result] = await DbUtil.executeAsync<ResultSetHeader>(
+     *   'INSERT INTO users (name, email) VALUES (:name, :email)',
+     *   { name: 'John', email: 'john@example.com' }
+     * );
+     * 
+     * // UPDATE with multiple conditions
+     * const [result] = await DbUtil.executeAsync<ResultSetHeader>(
+     *   'UPDATE users SET status = ? WHERE created_at < ? AND verified = ?',
+     *   ['inactive', '2023-01-01', false]
+     * );
+     * 
+     * // Repeated execution (prepared statement is reused)
+     * for (const user of users) {
+     *   await DbUtil.executeAsync(
+     *     'INSERT INTO audit_log (user_id, action) VALUES (?, ?)',
+     *     [user.id, 'login']
+     *   );
+     * }
+     * ```
      */
-    static async executeAsync<T extends mysql.QueryResult>(sql: string, paras?: ParasType): Promise<[T, mysql.FieldPacket[]]> {
+    static async executeAsync<T extends mysql.QueryResult>(sql: string, paras?: ParasType)
+        : Promise<[T, mysql.FieldPacket[]]> {
         try {
             debug("=== Executing SQL Query: Execute Method ===");
             debug("sql:", sql);
             debug("paras:", paras);
-            const pool = await this.getPool();
-            let result = await pool.query<T>(sql, paras);
+            const conn = await this.getConnection();
+            let result = await conn.execute<T>(sql, paras);
+            // Return the connection back to the pool
+            // This is crucial to prevent connection leaks and pool exhaustion
+            conn.release();
             debug("result:", result);
             return result;
         } catch (error) {
+            console.error("=== Error Executing Database Query ===");
+            console.error(error);
+            console.error("sql:", sql);
+            console.error("paras:", paras);
+
             throw new DatabaseError(
                 'Database query execution failed',
                 sql,
@@ -196,59 +219,188 @@ export class DbUtil {
         }
     }
 
-    /** Insert data and return the inserted ID */
+    /** Insert data and return the inserted ID
+     * 
+     * @description
+     * Uses prepared statements for safe parameter handling
+     * 
+     * @returns 
+     * - The auto-generated ID of the inserted row
+     * - null if the insert operation failed or no ID was generated
+     * 
+     * @example
+     * ```typescript
+     * // Basic INSERT
+     * const userId = await DbUtil.executeInsertAsync(
+     *   'INSERT INTO users (name, email) VALUES (?, ?)',
+     *   ['John Doe', 'john@example.com']
+     * );
+     * 
+     * // INSERT with named parameters
+     * const orderId = await DbUtil.executeInsertAsync(
+     *   'INSERT INTO orders (user_id, total, status) VALUES (:userId, :total, :status)',
+     *   { userId: 1, total: 99.99, status: 'pending' }
+     * );
+     * ```
+     */
     static async executeInsertAsync(
         sql: string,
         paras?: ParasType
     ): Promise<number | null> {
-        const [result] = await DbUtil.executeAsync<mysql.ResultSetHeader>(sql, paras);
-        if (!result) return null;
-        else {
+        const [result] = await this.executeAsync<mysql.ResultSetHeader>(sql, paras);
+        // 只需要检查 result 存在即可，因为成功的 INSERT 一定会返回 ResultSetHeader
+        if (result) {
             return result.insertId;
         }
+        return null;
     }
 
-    /** Delete data and return the number of affected rows */
+    /** Delete data and return the number of affected rows
+     * 
+     * @description
+     * Returns the number of rows affected by the DELETE operation
+     * Returns null if no rows were affected
+     * 
+     * @example
+     * ```typescript
+     * // Delete single record
+     * const affected = await DbUtil.executeDeleteAsync(
+     *   'DELETE FROM users WHERE id = ?',
+     *   [userId]
+     * );
+     * 
+     * // Delete multiple records with conditions
+     * const deleted = await DbUtil.executeDeleteAsync(
+     *   'DELETE FROM orders WHERE status = ? AND created_at < ?',
+     *   ['completed', '2023-01-01']
+     * );
+     * ```
+     */
     static async executeDeleteAsync(
         sql: string,
         paras?: ParasType
-    ): Promise<number | null> {
-        const [result] = await DbUtil.executeAsync<mysql.ResultSetHeader>(sql, paras);
-        if (!result) return null;
-        {
+    ): Promise<number> {
+        const [result] = await this.executeAsync<mysql.ResultSetHeader>(sql, paras);
+        if (!result) return 0;
+        else {
             return result.affectedRows;
         }
     }
 
-    /** Update data and return the number of affected rows */
+    /** Update data and return the number of affected rows
+     * 
+     * @description
+     * Returns the number of rows affected by the UPDATE operation
+     * Returns null if no rows were affected
+     * 
+     * @example
+     * ```typescript
+     * // Update single record
+     * const affected = await DbUtil.executeUpdateAsync(
+     *   'UPDATE users SET status = ? WHERE id = ?',
+     *   ['active', userId]
+     * );
+     * 
+     * // Update multiple records with named parameters
+     * const updated = await DbUtil.executeUpdateAsync(
+     *   'UPDATE products SET price = :newPrice WHERE category = :category',
+     *   { newPrice: 29.99, category: 'books' }
+     * );
+     * ```
+     */
     static async executeUpdateAsync(
         sql: string,
         paras?: ParasType
-    ): Promise<number | null> {
-        const [result] = await DbUtil.executeAsync<mysql.ResultSetHeader>(sql, paras);
+    ): Promise<number> {
+        const [result] = await this.executeAsync<mysql.ResultSetHeader>(sql, paras);
         if (!result) {
-            return null;
+            return 0;
         }
         else {
             return result.affectedRows;
         }
     }
 
-    /** Get a list of records matching the query */
+    /** Get a list of records matching the query
+     * 
+     * @description
+     * Returns an array of records matching the query
+     * Returns empty array if no records found
+     * 
+     * @example
+     * ```typescript
+     * // Get all active users
+     * interface User {
+     *   id: number;
+     *   name: string;
+     *   email: string;
+     * }
+     * 
+     * const users = await DbUtil.executeGetListAsync<User>(
+     *   'SELECT * FROM users WHERE status = ?',
+     *   ['active']
+     * );
+     * 
+     * // Get orders with conditions
+     * interface Order {
+     *   id: number;
+     *   total: number;
+     *   status: string;
+     * }
+     * 
+     * const orders = await DbUtil.executeGetListAsync<Order>(
+     *   'SELECT * FROM orders WHERE user_id = :userId AND total > :minTotal',
+     *   { userId: 1, minTotal: 100 }
+     * );
+     * ```
+     */
     static async executeGetListAsync<T extends Record<string, any>>(
         sql: string,
         paras?: ParasType
     ): Promise<QueryResult<T[]>> {
-        const [rows] = await DbUtil.executeAsync<mysql.RowDataPacket[]>(sql, paras);
-        return (rows.length > 0 ? rows : []) as QueryResult<T[]>;
+        const [rows] = await this.executeAsync<mysql.RowDataPacket[]>(sql, paras);
+        return (rows.length > 0 ? rows : []) as Array<T>;
     }
 
-    /** Get a single record matching the query */
+    /** Get a single record matching the query
+     * 
+     * @description
+     * Returns a single record matching the query
+     * Returns null if no record found
+     * Throws DatabaseError if multiple records found
+     * 
+     * @example
+     * ```typescript
+     * // Get user by id
+     * interface User {
+     *   id: number;
+     *   name: string;
+     *   email: string;
+     * }
+     * 
+     * const user = await DbUtil.executeGetSingleAsync<User>(
+     *   'SELECT * FROM users WHERE id = ?',
+     *   [userId]
+     * );
+     * 
+     * // Get order with named parameters
+     * interface Order {
+     *   id: number;
+     *   status: string;
+     *   total: number;
+     * }
+     * 
+     * const order = await DbUtil.executeGetSingleAsync<Order>(
+     *   'SELECT * FROM orders WHERE order_number = :orderNum',
+     *   { orderNum: 'ORD-2024-001' }
+     * );
+     * ```
+     */
     static async executeGetSingleAsync<T>(
         sql: string,
         paras?: ParasType
     ): Promise<T | null> {
-        const [rows] = await DbUtil.executeAsync<mysql.RowDataPacket[]>(sql, paras);
+        const [rows] = await this.executeAsync<mysql.RowDataPacket[]>(sql, paras);
         if (rows.length === 0) {
             return null
         }
@@ -256,57 +408,116 @@ export class DbUtil {
             return rows[0] as T;
         }
         else {
-            throw new Error(`Database query returned more than one result, please check SQL: ${sql}`);
+            throw new DatabaseError(
+                'Multiple results found when single result expected',
+                sql,
+                paras
+            );
         }
     }
 
-    /** Get a single value from the first column of the first row */
-    static async executeGetValueAsync(
-        sql: string,
-        paras?: ParasType
-    ): Promise<string | number | null> {
-        const [rows, fields] = await DbUtil.executeAsync<mysql.RowDataPacket[]>(sql, paras);
-
-        if (rows.length === 1) {
-            const field_name = fields[0].name;
-            let val = rows[0][field_name] || null
-            return val;
-        } else if (rows.length === 0) {
-            return null;
-        }
-        else if (rows.length > 1) {
-            throw new Error(`Database query returned more than one result, please check SQL: ${sql}`);
-        }
-
-        return null;
-    }
-
+    /**
+     * Get a single string value from the first column of the first row
+     * 
+     * @description
+     * Useful for queries that return a single string value like:
+     * - Getting a user's name
+     * - Getting a status value
+     * - Getting a single text field
+     * 
+     * @throws {DatabaseError} When:
+     * - Multiple rows are returned
+     * - The value is not a string
+     * 
+     * @returns 
+     * - The string value if found
+     * - null if no rows found or value is null
+     * 
+     * @example Get user's name
+     * ```typescript
+     * const name = await DbUtil.executeGetStringAsync(
+     *   'SELECT name FROM users WHERE id = ?',
+     *   [userId]
+     * );
+     * ```
+     */
     static async executeGetStringAsync(
         sql: string,
         paras?: ParasType
     ): Promise<string | null> {
-        let val = await DbUtil.executeGetValueAsync(sql, paras);
-        if (isString(val)) {
-            return val;
-        } else if (!val) {
-            return null;
-        } else {
-            throw new Error("Return value is not of type string");
+        const [rows, fields] = await this.executeAsync<mysql.RowDataPacket[]>(sql, paras);
+        if (rows.length === 0) return null;
+        if (rows.length > 1) {
+            throw new DatabaseError(
+                'Multiple results found when single result expected',
+                sql,
+                paras
+            );
         }
+
+        const field_name = fields[0].name;
+        const val = rows[0][field_name];
+
+        if (val === null || val === undefined) return null;
+        if (isString(val)) return val;
+
+        throw new DatabaseError(
+            'Return value is not of type string',
+            sql,
+            paras
+        );
     }
 
+    /**
+     * Get a single number value from the first column of the first row
+     * 
+     * @description
+     * Useful for queries that return a single numeric value like:
+     * - COUNT() results
+     * - SUM() results
+     * - Numeric field values
+     * 
+     * @throws {DatabaseError} When:
+     * - Multiple rows are returned
+     * - The value is not a number
+     * 
+     * @returns
+     * - The number value if found
+     * - null if no rows found or value is null
+     * 
+     * @example Get total count
+     * ```typescript
+     * const count = await DbUtil.executeGetNumberAsync(
+     *   'SELECT COUNT(*) FROM orders WHERE status = ?',
+     *   ['pending']
+     * );
+     * ```
+     */
     static async executeGetNumberAsync(
         sql: string,
         paras?: ParasType
     ): Promise<number | null> {
-        let val = await DbUtil.executeGetValueAsync(sql, paras);
-        if (isNumber(val)) {
-            return val;
-        } else if (!val) {
-            return null;
-        } else {
-            throw new Error("Return value is not of type number");
+        const [rows, fields] = await this.executeAsync<mysql.RowDataPacket[]>(sql, paras);
+        if (rows.length === 0) return null;
+        if (rows.length > 1) {
+            throw new DatabaseError(
+                'Multiple results found when single result expected',
+                sql,
+                paras
+            );
         }
+
+        const field_name = fields[0].name;
+        const val = rows[0][field_name];
+
+        if (val === null || val === undefined) return null;
+        if (isNumber(val)) return val;
+
+        throw new DatabaseError(
+            'Return value is not of type number',
+            sql,
+            paras
+        );
     }
 
     /**
@@ -358,59 +569,11 @@ export class DbUtil {
         return list;
     }
 
-    /**
-     * Get total count of results
-     * @param sql SQL query that returns a count (e.g., SELECT count(*) AS total FROM ...)
-     */
-    static async getTotalAsync(sql: string): Promise<number> {
-        let total = await DbUtil.executeGetNumberAsync(sql);
-        return total ?? 0;
-    }
-
-    /**
-     * Get maximum sort order value plus one for a table
-     * @param table_name Table name
-     * @returns Next available sort order
-     */
-    static async getMaxSortOrderAsync(table_name: string): Promise<number> {
-        let sql = SqlString.format(
-            `SELECT max(sort_order) AS max_sorder FROM ??`,
-            [table_name]
-        );
-        let current_max_sort_order = await DbUtil.executeGetNumberAsync(sql);
-        return (current_max_sort_order ?? 0) + 1;
-    }
-
-    /**
-     * Find real integer ID from database using UUID
-     * @param target_type Target table name
-     * @param target_uuid UUID value
-     * @returns Integer ID
-     */
-    static async getIdFromUUIDAsync(target_type: string, target_uuid: string) {
-        let sql = ` SELECT id FROM ?? WHERE uuid = ? `;
-        let para = [target_type, target_uuid];
-        let merge_sql = SqlString.format(sql, para);
-
-        interface IdResult {
-            id: number;
-        }
-        const result_list = await DbUtil.executeGetListAsync<IdResult>(merge_sql);
-        if (Array.isArray(result_list)) {
-            if (result_list.length === 1) {
-                return result_list[0].id;
-            } else if (result_list.length > 1) {
-                debug("Error: UUID is not unique");
-            }
-        }
-        return null;
-    }
 
     static async withTransaction<T>(
-        callback: (connection: mysql.PoolConnection) => Promise<T>
+        callback: (connection: mysql.Connection) => Promise<T>
     ): Promise<T> {
-        const pool = await this.getPool();
-        const connection = await pool.getConnection();
+        const connection = await this.getConnection();
 
         try {
             await connection.beginTransaction();
@@ -421,17 +584,16 @@ export class DbUtil {
             await connection.rollback();
             throw error;
         } finally {
+            // Return the connection back to the pool
+            // This is crucial to prevent connection leaks and pool exhaustion
             connection.release();
         }
     }
 
-    /**
-     * Create a new instance with specific configuration
-     * Useful for managing multiple database connections
-     */
-    static createInstance(options: DatabaseOptions): typeof DbUtil {
-        const NewDbUtil = class extends DbUtil { };
-        NewDbUtil.initialize(options);
-        return NewDbUtil;
+    // Add this type guard method to the class
+    private static isPoolOptions(options: unknown): options is mysql.PoolOptions {
+        return typeof options === 'object' &&
+            options !== null &&
+            !('href' in options); // Simple check to distinguish from URL string
     }
 }

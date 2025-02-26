@@ -49,7 +49,6 @@
   "dependencies": {
     "@types/debug": "^4.1.12",
     "@types/lodash": "^4.17.15",
-    "@types/mysql": "^2.15.26",
     "@types/pluralize": "^0.0.33",
     "@types/sqlstring": "^2.3.2",
     "@types/yargs": "^17.0.33",
@@ -57,7 +56,6 @@
     "debug": "^4.4.0",
     "dotenv-flow": "^4.1.0",
     "lodash": "^4.17.21",
-    "mysql": "^2.18.1",
     "mysql2": "^3.12.0",
     "pg-promise": "^11.10.2",
     "pluralize": "^8.0.0",

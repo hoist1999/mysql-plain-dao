@@ -13,21 +13,11 @@
  * Enhanced with MySQL and PostgreSQL support.
  */
 
-import * as yargs from 'yargs'
-import * as fs from 'fs'
 import chalk from 'chalk'
+import * as fs from 'fs'
 import terminalLink from 'terminal-link'
-import { typescriptOfSchema, getDatabase } from './index'
-import Options from './options'
-
-interface SchematsConfig {
-    conn: string,
-    table: string[] | string,
-    schema: string,
-    output: string,
-    camelCase: boolean,
-    noHeader: boolean,
-}
+import * as yargs from 'yargs'
+import { typescriptOfSchema } from './index'
 
 
 (async () => {
@@ -43,13 +33,13 @@ Please visit ${terminalLink('documentation', 'https://github.com/hoist1999/mysql
 
 ${chalk.bold('This tool helps you:')}
     - Generate TypeScript interfaces from existing database tables
-    - Maintain type safety between your database and application code
-    - Automatically update type definitions when database schema changes
 `)
         .global('config')
         .default('config', 'schemats.json')
         .config()
         .env('SCHEMATS')
+        .demandCommand(1, 'You need at least one command before moving on')
+        .strict()
 
         // subcommand: generate
         .command({
@@ -112,7 +102,7 @@ ${chalk.bold('This tool helps you:')}
         // help: optional
         .help('h')
         .alias('h', 'help')
-        .showHelpOnFail(false)
+        .showHelpOnFail(true, 'Specify --help for available options')
         .recommendCommands()
         .argv;
 

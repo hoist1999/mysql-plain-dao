@@ -1,18 +1,18 @@
 import dotenvFlow from 'dotenv-flow';
 import debug_func from 'debug';
-
+import mysql from 'mysql2';
 const debug = debug_func('DAO');
 
-export interface DBConfig {
-    host: string;
-    user: string;
-    password: string;
-    database: string;
-    port: number;
-    connectionLimit?: number;
-    queueLimit?: number;
-    waitForConnections?: boolean;
-}
+// export interface DBConfig {
+//     host: string;
+//     user: string;
+//     password: string;
+//     database: string;
+//     port: number;
+//     connectionLimit?: number;
+//     queueLimit?: number;
+//     waitForConnections?: boolean;
+// }
 
 const REQUIRED_ENV_VARS = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_DATABASE'] as const;
 
@@ -46,7 +46,7 @@ const REQUIRED_ENV_VARS = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_DATABASE'] a
  * - DB_QUEUE_LIMIT: Connection queue limit (default: 0)
  * - DB_WAIT_FOR_CONNECTIONS: Wait for connections (default: false)
  */
-export function getDbConfigFromEnv(): DBConfig {
+export function getDbConfigFromEnv(): mysql.PoolOptions {
     // Load environment variables based on NODE_ENV
     dotenvFlow.config({
         node_env: process.env.NODE_ENV || 'development'
@@ -59,7 +59,7 @@ export function getDbConfigFromEnv(): DBConfig {
         }
     }
 
-    const config: DBConfig = {
+    const config: mysql.PoolOptions = {
         host: process.env.DB_HOST!,
         user: process.env.DB_USER!,
         password: process.env.DB_PASSWORD!,
@@ -67,7 +67,8 @@ export function getDbConfigFromEnv(): DBConfig {
         port: Number(process.env.DB_PORT) || 3306,
         connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
         queueLimit: Number(process.env.DB_QUEUE_LIMIT) || 0,
-        waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true'
+        waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true',
+        debug: process.env.NODE_ENV === 'development'
     };
 
     debug('DB Config:', {

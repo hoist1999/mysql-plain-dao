@@ -1,18 +1,19 @@
-import * as mysql from 'mysql'
-import { mapValues, keys, isEqual } from 'lodash'
+import debug from 'debug'
+import { isEqual, keys, mapValues } from 'lodash'
+import mysql from 'mysql2/promise'
 import { parse as urlParse } from 'url'
-import { TableDefinition, Database } from './schemaInterfaces'
 import Options from './options'
+import { Database, TableDefinition } from './schemaInterfaces'
 
 export class MysqlDatabase implements Database {
-    private db: mysql.Connection
+    private db: mysql.Connection | null = null
     private defaultSchema: string
 
     constructor(public connectionString: string) {
-        this.db = mysql.createConnection(connectionString)
+        this.connectionString = connectionString;
         let url = urlParse(connectionString, true)
         if (url && url.pathname) {
-            let database = url.pathname.substr(1)
+            let database = url.pathname.slice(1)
             this.defaultSchema = database
         } else {
             this.defaultSchema = 'public'
@@ -161,15 +162,16 @@ export class MysqlDatabase implements Database {
         return schemaTables.map((schemaItem: { table_name: string }) => schemaItem.table_name)
     }
 
-    public queryAsync(queryString: string, escapedValues?: Array<string>): Promise<Object[]> {
-        return new Promise((resolve, reject) => {
-            this.db.query(queryString, escapedValues, (error, results, fields) => {
-                if (error) {
-                    return reject(error)
-                }
-                return resolve(results)
-            })
-        })
+    public async queryAsync(queryString: string, escapedValues?: Array<string>): Promise<any[]> {
+        try {
+            if (!this.db) {
+                this.db = await mysql.createConnection(this.connectionString)
+            }
+            const [results] = await this.db.query(queryString, escapedValues)
+            return results as any[]
+        } catch (error) {
+            throw error
+        }
     }
 
     public getDefaultSchema(): string {
