@@ -7,22 +7,19 @@
  * 
  * Example usage:
  * MySQL:     schemats generate -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/users.ts
- * PostgreSQL: schemats generate -c postgres://user:pass@localhost:5432/dbname -t users -o src/models/users.ts
- * 
- * Created by xiamx on 2016-08-10.
- * Enhanced with MySQL and PostgreSQL support.
  */
 
 import chalk from 'chalk'
-import * as fs from 'fs'
 import terminalLink from 'terminal-link'
-import * as yargs from 'yargs'
-import { typescriptOfSchema } from './index'
-
+import yargs from 'yargs'
+import { generateAndWriteDaos } from './generateDao'
+import { generateAndWriteModels } from './generateModel'
+import { getDatabase } from './common'
+import { CliOptions, GenerateType, Database } from './Types'
 
 (async () => {
 
-    let argv = await yargs
+    let argv = yargs
         .locale('en')
         .usage(`
 ${chalk.bold('Generate TypeScript models from MySQL/PostgreSQL database tables.')}
@@ -58,6 +55,12 @@ ${chalk.bold('This tool helps you:')}
                     .nargs('t', 1)
                     .describe('t', 'table name(s) to generate interfaces for')
 
+                    // generate type: optional
+                    .alias('g', 'generate')
+                    .describe('g', 'generation type (model, dao, or all)')
+                    .choices('g', ['model', 'dao', 'all'])
+                    .default('g', 'all')
+
                     // schema name: optional    
                     .alias('s', 'schema')
                     .nargs('s', 1)
@@ -70,14 +73,46 @@ ${chalk.bold('This tool helps you:')}
                     // skip writing file header comment: optional
                     .describe('noHeader', 'skip writing file header comment')
 
-                    // output file path: required
+                    // output directory for model and DAO files
                     .demand('o')
                     .nargs('o', 1)
                     .alias('o', 'output')
                     .describe('o', 'output TypeScript file path')
+
+                    // output directory for model files
+                    .describe('model-dir', 'output directory for model files')
+                    .default('model-dir', './src/models')
+
+                    // output directory for DAO files
+                    .describe('dao-dir', 'output directory for DAO files')
+                    .default('dao-dir', './src/dao')
             },
             handler: async (argv) => {
                 try {
+                    // Add parameter validation
+                    const generateType = argv.g;
+                    const hasOutput = Boolean(argv.output);
+                    const hasModelDir = Boolean(argv.modelDir);
+                    const hasDaoDir = Boolean(argv.daoDir);
+
+                    // Validate output parameters based on generation type
+                    if (generateType === 'all') {
+                        if (!hasOutput && !(hasModelDir && hasDaoDir)) {
+                            console.error('For generate type "all", you must provide either --output or both --model-dir and --dao-dir');
+                            process.exit(1);
+                        }
+                    } else if (generateType === 'model') {
+                        if (!hasOutput && !hasModelDir) {
+                            console.error('For generate type "model", you must provide either --output or --model-dir');
+                            process.exit(1);
+                        }
+                    } else if (generateType === 'dao') {
+                        if (!hasOutput && !hasDaoDir) {
+                            console.error('For generate type "dao", you must provide either --output or --dao-dir');
+                            process.exit(1);
+                        }
+                    }
+
                     if (!Array.isArray(argv)) {
                         if (!argv.table) {
                             argv.table = []
@@ -86,12 +121,21 @@ ${chalk.bold('This tool helps you:')}
                         }
                     }
 
-                    let formattedOutput = await typescriptOfSchema(
+                    const options: CliOptions = {
+                        camelCase: argv.camelCase as boolean || false,
+                        writeHeader: !argv.noHeader || true,
+                        generateType: generateType as GenerateType || 'all',
+                        modelDir: argv.modelDir as string || './src/models',
+                        daoDir: argv.daoDir as string || './src/dao',
+                        outputFile: argv.output as string
+                    };
+
+                    await executeGenerateAsync(
                         argv.conn as string,
                         argv.table as string[],
                         argv.schema as string,
-                        { camelCase: argv.camelCase as boolean, writeHeader: !argv.noHeader })
-                    fs.writeFileSync(argv.output as fs.PathOrFileDescriptor, formattedOutput)
+                        options
+                    )
 
                 } catch (e) {
                     console.error(e)
@@ -104,9 +148,44 @@ ${chalk.bold('This tool helps you:')}
         .alias('h', 'help')
         .showHelpOnFail(true, 'Specify --help for available options')
         .recommendCommands()
-        .argv;
+        .parse();
 
 })().catch((e: any) => {
     console.warn(e)
     process.exit(1)
 })
+
+
+
+// execute generate sub command
+export async function executeGenerateAsync(
+    conn: string,
+    tables: string[] = [],
+    schema: string | null = null,
+    options: CliOptions
+): Promise<void> {
+    let db: Database = getDatabase(conn);
+
+    if (!schema) {
+        schema = db.getDefaultSchema()
+    }
+
+    // if -t is not provided, get all tables from the schema
+    if (tables.length === 0) {
+        tables = await db.getSchemaTables(schema)
+    }
+
+    await generateAndWriteModels(
+        db,
+        tables,
+        schema as string,
+        options);
+
+
+    await generateAndWriteDaos(
+        db,
+        tables,
+        schema as string,
+        options
+    );
+}

@@ -2,9 +2,18 @@
   "name": "mysql-plain-dao",
   "version": "0.1.2-beta.1",
   "description": "A plain dao for mysql, no ORM, just plain sql",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./generator": {
+      "types": "./dist/generator/index.d.ts",
+      "default": "./dist/generator/index.js"
+    }
+  },
   "bin": {
     "mysql-plain-dao": "./dist/generator/cli.js"
   },
@@ -12,7 +21,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup --format esm",
     "test": "NODE_ENV=test-local DEBUG=-DAO jest --runInBand",
     "test-in-docker": "NODE_ENV=test-in-docker DEBUG=-DAO jest --runInBand",
     "prepublishOnly": "pnpm build",

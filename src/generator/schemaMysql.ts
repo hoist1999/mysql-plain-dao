@@ -1,9 +1,9 @@
 import debug from 'debug'
-import { isEqual, keys, mapValues } from 'lodash'
+import _ from 'lodash'
 import mysql from 'mysql2/promise'
 import { parse as urlParse } from 'url'
-import Options from './options'
-import { Database, TableDefinition } from './schemaInterfaces'
+import { transformTypeName } from './common'
+import { CliOptions, Database, TableDefinition } from './Types'
 
 export class MysqlDatabase implements Database {
     private db: mysql.Connection | null = null
@@ -21,9 +21,9 @@ export class MysqlDatabase implements Database {
     }
 
     // uses the type mappings from https://github.com/mysqljs/ where sensible
-    private static mapTableDefinitionToType(tableDefinition: TableDefinition, customTypes: string[], options: Options): TableDefinition {
+    private static mapTableDefinitionToType(tableDefinition: TableDefinition, customTypes: string[], options: CliOptions): TableDefinition {
         if (!options) throw new Error()
-        return mapValues(tableDefinition, column => {
+        return _.mapValues(tableDefinition, column => {
             switch (column.udtName) {
                 case 'char':
                 case 'varchar':
@@ -72,7 +72,7 @@ export class MysqlDatabase implements Database {
                     return column
                 default:
                     if (customTypes.indexOf(column.udtName) !== -1) {
-                        column.tsType = options.transformTypeName(column.udtName)
+                        column.tsType = transformTypeName(options.camelCase, column.udtName)
                         return column
                     } else {
                         debug(`Type [${column.udtName}] has been mapped to [any] because no specific type has been found.`)
@@ -115,7 +115,7 @@ export class MysqlDatabase implements Database {
         rawEnumRecords.forEach((enumItem: { column_name: string, column_type: string, data_type: string }) => {
             const enumName = MysqlDatabase.getEnumNameFromColumn(enumItem.data_type, enumItem.column_name)
             const enumValues = MysqlDatabase.parseMysqlEnumeration(enumItem.column_type)
-            if (enums[enumName] && !isEqual(enums[enumName], enumValues)) {
+            if (enums[enumName] && !_.isEqual(enums[enumName], enumValues)) {
                 const errorMsg = `Multiple enums with the same name and contradicting types were found: ` +
                     `${enumItem.column_name}: ${JSON.stringify(enums[enumName])} and ${JSON.stringify(enumValues)}`
                 throw new Error(errorMsg)
@@ -145,9 +145,9 @@ export class MysqlDatabase implements Database {
         return tableDefinition
     }
 
-    public async getTableTypes(tableName: string, tableSchema: string, options: Options) {
+    public async getTableTypes(tableName: string, tableSchema: string, options: CliOptions) {
         const enumTypes: any = await this.getEnumTypes(tableSchema)
-        let customTypes = keys(enumTypes)
+        let customTypes = _.keys(enumTypes)
         return MysqlDatabase.mapTableDefinitionToType(await this.getTableDefinition(tableName, tableSchema), customTypes, options)
     }
 
@@ -176,5 +176,14 @@ export class MysqlDatabase implements Database {
 
     public getDefaultSchema(): string {
         return this.defaultSchema
+    }
+
+    public async getPrimaryKey(schema: string, table: string): Promise<{ dataType: string } | null> {
+        const result = await this.queryAsync(
+            'SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS ' +
+            'WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_KEY = "PRI"',
+            [schema, table]
+        );
+        return result[0] ? { dataType: result[0].DATA_TYPE } : null;
     }
 }

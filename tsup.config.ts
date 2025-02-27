@@ -4,7 +4,8 @@ export default defineConfig([
   // TypeScript Library - Output ESM format
   {
     entry: {
-      'index': 'src/index.ts'
+      'index': 'src/dao/index.ts',
+      'generator/index': 'src/generator/index.ts',
     },
     format: ['esm'],  // ESM format only
     dts: true,
