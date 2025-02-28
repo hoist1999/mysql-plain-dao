@@ -1,19 +1,19 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig([
-  // TypeScript Library - Output ESM format
+  // TypeScript Library
   {
     entry: {
       'index': 'src/dao/index.ts',
       'generator/index': 'src/generator/index.ts',
     },
-    format: ['esm'],  // ESM format only
+    format: ['esm'],
     dts: true,
     splitting: false,
     sourcemap: true,
     clean: true,
   },
-  // CLI Tool - Node.js format only
+  // CLI Tool
   {
     entry: {
       'generator/cli': 'src/generator/cli.ts',

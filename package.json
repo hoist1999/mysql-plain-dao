@@ -4,7 +4,6 @@
   "description": "A plain dao for mysql, no ORM, just plain sql",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -22,7 +21,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup --format esm",
+    "build": "tsup",
     "test": "NODE_ENV=test-local DEBUG=-DAO jest --runInBand",
     "test-in-docker": "NODE_ENV=test-in-docker DEBUG=-DAO jest --runInBand",
     "prepublishOnly": "pnpm build",
@@ -40,13 +39,13 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^29.5.12",
+    "@types/jest": "^29.5.14",
     "@types/node": "^20.11.24",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
+    "ts-jest": "^29.2.5",
     "tsup": "^8.0.2",
     "tsx": "^4.19.3",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.3"
   },
   "repository": {
     "type": "git",
