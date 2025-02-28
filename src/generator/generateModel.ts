@@ -1,8 +1,13 @@
 import fs from 'fs'
 import { Options as ITFOptions, processString } from 'typescript-formatter'
-import { getDatabase } from './common'
+import { 
+    generateEnumType, 
+    generateTableInterface, 
+    generateTableTypes,
+    getDatabase, 
+    formatNameWithCase 
+} from './common'
 import { CliOptions, Database } from './Types'
-import { generateEnumType, generateTableInterface, generateTableTypes } from './common'
 
 export async function generateAndWriteModels(
     db: Database,
@@ -10,37 +15,43 @@ export async function generateAndWriteModels(
     schema: string,
     options: CliOptions
 ): Promise<void> {
-    // Generate and write files based on generation type
     if (options.generateType === 'model' || options.generateType === 'all') {
+        for (const table of tables) {
+            let output = '/* tslint:disable */\n\n'
 
-        let output = '/* tslint:disable */\n\n'
+            if (options.writeHeader) {
+                output += buildHeader(db, [table], schema, options)
+            }
 
-        if (options.writeHeader) {
-            output += buildHeader(db, tables, schema, options)
+            // Generate enum types
+            const enumTypes = generateEnumType(await db.getEnumTypes(schema), options)
+            output += enumTypes
+
+            // Generate model interface for this table
+            const modelContent = await typescriptOfTable(db, table, schema, options)
+            output += modelContent
+
+            const formattedOutput = await formatTypeScript(output)
+
+            // Generate file name based on table name
+            const modelName = formatNameWithCase(table)
+            const fileName = `${modelName}Model.ts`
+
+            // Use modelDir if specified, otherwise use outputDir
+            const outputDir = options.modelDir || options.outputDir
+            if (!outputDir) {
+                throw new Error('No output directory specified for model generation')
+            }
+            const outputPath = `${outputDir}/${fileName}`
+
+            // Ensure output directory exists
+            fs.mkdirSync(outputDir, { recursive: true })
+
+            console.log(`Writing model file: ${outputPath}`)
+            fs.writeFileSync(outputPath, formattedOutput)
         }
-
-        // Generate enum types
-        const enumTypes = generateEnumType(await db.getEnumTypes(schema), options)
-        output += enumTypes
-
-        // Generate model interfaces
-        const modelContent = await generateModels(db, tables, schema, options)
-        output += modelContent
-
-        const formattedOutput = await formatTypeScript(output)
-
-        const outputPath = `${options.modelDir}/${options.outputFile}`
-        // Ensure output directories exist
-        if (options.modelDir) {
-            fs.mkdirSync(options.modelDir, { recursive: true });
-        }
-        fs.writeFileSync(outputPath, formattedOutput)
-
     }
-
 }
-
-
 
 function getTime() {
     let padTime = (value: number) => `0${value}`.slice(-2)
@@ -56,7 +67,6 @@ function getTime() {
 
 export function buildHeader(db: Database, tables: string[], schema: string | null, options: CliOptions): string {
     let commands = ['schemats', 'generate', '-c', db.connectionString.replace(/:\/\/.*@/, '://username:password@')]
-    if (options.camelCase) commands.push('-C')
     if (tables.length > 0) {
         tables.forEach((t: string) => {
             commands.push('-t', t)
@@ -74,7 +84,6 @@ export function buildHeader(db: Database, tables: string[], schema: string | nul
          * $ ${commands.join(' ')}
          *
          */
-
     `
 }
 
@@ -91,18 +100,6 @@ export async function typescriptOfTable(db: Database | string,
     interfaces += generateTableTypes(table, tableTypes, options)
     interfaces += generateTableInterface(table, tableTypes, options)
     return interfaces
-}
-
-async function generateModels(
-    db: Database,
-    tables: string[],
-    schema: string,
-    options: CliOptions
-): Promise<string> {
-    const interfacePromises = tables.map((table) =>
-        typescriptOfTable(db, table, schema, options)
-    )
-    return Promise.all(interfacePromises).then(tsOfTable => tsOfTable.join(''))
 }
 
 export async function formatTypeScript(content: string): Promise<string> {

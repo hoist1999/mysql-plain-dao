@@ -16,17 +16,17 @@ export interface Database {
     getTableDefinition(tableName: string, tableSchema: string): Promise<TableDefinition>
     getTableTypes(tableName: string, tableSchema: string, options: CliOptions): Promise<TableDefinition>
     getSchemaTables(schemaName: string): Promise<string[]>
-    getPrimaryKey(schema: string, table: string): Promise<{ dataType: string } | null>;
+    getPrimaryKey(schema: string, table: string): Promise<{ dataType: string } | null>
+    close(): Promise<void>
 }
 
 
 export type GenerateType = 'model' | 'dao' | 'all';
 
 export type CliOptions = {
-    camelCase: boolean
     writeHeader?: boolean, // write schemats description header
     generateType?: GenerateType
     modelDir?: string
     daoDir?: string
-    outputFile?: string
+    outputDir?: string
 }

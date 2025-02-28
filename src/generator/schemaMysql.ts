@@ -72,7 +72,7 @@ export class MysqlDatabase implements Database {
                     return column
                 default:
                     if (customTypes.indexOf(column.udtName) !== -1) {
-                        column.tsType = transformTypeName(options.camelCase, column.udtName)
+                        column.tsType = transformTypeName(column.udtName)
                         return column
                     } else {
                         debug(`Type [${column.udtName}] has been mapped to [any] because no specific type has been found.`)
@@ -185,5 +185,12 @@ export class MysqlDatabase implements Database {
             [schema, table]
         );
         return result[0] ? { dataType: result[0].DATA_TYPE } : null;
+    }
+
+    public async close(): Promise<void> {
+        if (this.db) {
+            await this.db.end();
+            this.db = null;
+        }
     }
 }

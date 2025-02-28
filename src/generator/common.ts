@@ -24,14 +24,12 @@ export function getDatabase(connection: string): Database {
     }
 }
 
-export function transformTypeName(camelCase: Boolean, typename: string) {
-    return camelCase ? _.upperFirst(_.camelCase(typename)) : typename
+export function transformTypeName(typename: string) {
+    return typename;
 }
 
-
-export function transformColumnName(camelCase: Boolean, columnName: string) {
+export function transformColumnName(columnName: string) {
     return columnName;
-    //return this.options.camelCase ? camelCase(columnName) : columnName
 }
 
 function nameIsReservedKeyword(name: string): boolean {
@@ -68,7 +66,7 @@ export function generateTableInterface(tableNameRaw: string, tableDefinition: Ta
 export function generateEnumType(enumObject: any, options: CliOptions) {
     let enumString = ''
     for (let enumNameRaw in enumObject) {
-        const enumName = transformTypeName(options.camelCase, enumNameRaw)
+        const enumName = transformTypeName(enumNameRaw)
         enumString += `export type ${enumName} = `
         enumString += enumObject[enumNameRaw].map((v: string) => `'${v}'`).join(' | ')
         enumString += ';\n'
@@ -77,21 +75,27 @@ export function generateEnumType(enumObject: any, options: CliOptions) {
 }
 
 export function generateTableTypes(tableNameRaw: string, tableDefinition: TableDefinition, options: CliOptions) {
-    const tableName = transformTypeName(options.camelCase, tableNameRaw)
-    let fields = ''
-    Object.keys(tableDefinition).forEach((columnNameRaw) => {
-        let type = tableDefinition[columnNameRaw].tsType
-        let nullable = tableDefinition[columnNameRaw].nullable ? '| null' : ''
-        let optionalProperty = tableDefinition[columnNameRaw].nullable ? '?' : ''
+    const tableName = formatNameWithCase(tableNameRaw);
+    let fields = '';
+    
+    Object.entries(tableDefinition).forEach(([columnNameRaw, column]) => {
+        const columnName = transformColumnName(columnNameRaw);
+        const normalizedName = normalizeName(columnName, options);
+        const type = column.tsType || 'any';
+        const nullable = column.nullable ? ' | null' : '';
+        const optionalModifier = column.nullable ? '?' : '';
 
-        const columnName = transformColumnName(options.camelCase, columnNameRaw)
-        fields += `${normalizeName(columnName, options)} ${optionalProperty}: ${type}${nullable};\n`
-    })
+        fields += `    ${normalizedName}${optionalModifier}: ${type}${nullable};\n`;
+    });
 
     return `
-        export interface ${tableName} {
-        ${fields}
-        }
-    `
+export interface ${tableName} {
+${fields}}
+`;
+}
+
+export function formatNameWithCase(name: string): string {
+    // Capitalize first letter, leave rest unchanged
+    return name.charAt(0).toUpperCase() + name.slice(1);
 }
 

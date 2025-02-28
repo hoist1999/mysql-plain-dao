@@ -69,7 +69,6 @@
     "pg-promise": "^11.10.2",
     "pluralize": "^8.0.0",
     "sqlstring": "^2.3.3",
-    "terminal-link": "^3.0.0",
     "typescript-formatter": "^7.2.2",
     "yargs": "^17.7.2"
   }
