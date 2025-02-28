@@ -6,7 +6,11 @@ on:
       - 'v*'
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml # 调用测试工作流
+
   release:
+    needs: test # 等待测试完成后再执行发布
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,9 +27,6 @@ jobs:
           
       - name: Install dependencies
         run: pnpm install
-        
-      - name: Run tests
-        run: pnpm test
         
       - name: Build
         run: pnpm build
