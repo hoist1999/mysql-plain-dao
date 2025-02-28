@@ -1,5 +1,5 @@
 import sqlstring from "sqlstring";
-import { OrderBy, SortCondition } from "./Types";
+import { OrderBy, type SortCondition } from "./Types.js";
 
 /** Utility class for constructing SQL statements
  */

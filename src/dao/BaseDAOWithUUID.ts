@@ -1,7 +1,7 @@
 import SqlString from "sqlstring";
-import { InsertModel, PlainObject } from "./Types";
-import { BaseDAO, Option } from "./BaseDAO";
-import { DbUtil } from "./DbUtil";
+import type { InsertModel, PlainObject } from "./Types.js";
+import { BaseDAO, type Option } from "./BaseDAO.js";
+import { DbUtil } from "./DbUtil.js";
 
 /** Base class for all DAO layers with UUID support
  * Extends basic CRUD capabilities by adding UUID column for enhanced data security

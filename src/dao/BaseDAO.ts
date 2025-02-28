@@ -1,7 +1,7 @@
 import SqlString from "sqlstring";
-import { InsertModel, ParasType, PlainObject, SortCondition } from "./Types";
-import { DbUtil } from "./DbUtil";
-import { SqlUtil } from "./SqlUtil";
+import type { InsertModel, ParasType, PlainObject, SortCondition } from "./Types.js";
+import { DbUtil } from "./DbUtil.js";
+import { SqlUtil } from "./SqlUtil.js";
 
 export interface Option {
     table_name: string;

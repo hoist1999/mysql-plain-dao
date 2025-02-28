@@ -18,10 +18,10 @@ export default defineConfig([
     entry: {
       'generator/cli': 'src/generator/cli.ts',
     },
-    format: ['cjs'],  // CommonJS format only
-    dts: false,       // No type declarations needed for CLI
+    format: ['esm'],
+    dts: false,
     splitting: false,
     sourcemap: true,
-    clean: false,
+    clean: false
   }
 ]) 

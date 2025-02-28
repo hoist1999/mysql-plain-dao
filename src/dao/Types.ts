@@ -1,4 +1,4 @@
-import { ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 // https://dev.to/ankittanna/how-to-create-a-type-for-complex-json-object-in-typescript-d81
 export type JSONValue =

@@ -1,5 +1,5 @@
-import { BaseDAOWithUUID } from '../dao/BaseDAOWithUUID';
-import { User } from './User';
+import { BaseDAOWithUUID } from '../dao/BaseDAOWithUUID.js';
+import { User } from './User.js';
 
 export class UserDao extends BaseDAOWithUUID<User> {
     constructor() {

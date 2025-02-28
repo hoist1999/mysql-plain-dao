@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
-import { formatTypeScript } from './generateModel'
-import { CliOptions, Database } from './Types'
-import { formatNameWithCase } from './common'
+import { formatTypeScript } from './generateModel.js'
+import type { CliOptions, Database } from './Types.js'
+import { formatNameWithCase } from './common.js'
 
 export async function generateAndWriteDaos(
     db: Database,
@@ -27,8 +27,6 @@ export async function generateAndWriteDaos(
 
             // Ensure output directory exists
             fs.mkdirSync(outputDir, { recursive: true })
-
-            console.log(`Writing DAO file: ${outputPath}`)
             fs.writeFileSync(outputPath, formattedOutput)
         }
     }

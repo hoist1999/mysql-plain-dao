@@ -2,8 +2,8 @@ import debug from 'debug'
 import _ from 'lodash'
 import mysql from 'mysql2/promise'
 import { parse as urlParse } from 'url'
-import { transformTypeName } from './common'
-import { CliOptions, Database, TableDefinition } from './Types'
+import { transformTypeName } from './common.js'
+import type { CliOptions, Database, TableDefinition } from './Types.js'
 
 export class MysqlDatabase implements Database {
     private db: mysql.Connection | null = null

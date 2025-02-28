@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { CliOptions, Database, TableDefinition } from './Types'
-import { MysqlDatabase } from './schemaMysql'
+import type { CliOptions, Database, TableDefinition } from './Types.js'
+import { MysqlDatabase } from './schemaMysql.js'
 
 export enum SQLVersion {
     MYSQL = 2,
@@ -77,7 +77,7 @@ export function generateEnumType(enumObject: any, options: CliOptions) {
 export function generateTableTypes(tableNameRaw: string, tableDefinition: TableDefinition, options: CliOptions) {
     const tableName = formatNameWithCase(tableNameRaw);
     let fields = '';
-    
+
     Object.entries(tableDefinition).forEach(([columnNameRaw, column]) => {
         const columnName = transformColumnName(columnNameRaw);
         const normalizedName = normalizeName(columnName, options);

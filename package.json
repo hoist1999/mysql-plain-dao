@@ -4,6 +4,7 @@
   "description": "A plain dao for mysql, no ORM, just plain sql",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -61,7 +62,8 @@
     "@types/pluralize": "^0.0.33",
     "@types/sqlstring": "^2.3.2",
     "@types/yargs": "^17.0.33",
-    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "dao": "link:/Users/ike-tom/sites/mysql-plain-dao/src/dao",
     "debug": "^4.4.0",
     "dotenv-flow": "^4.1.0",
     "lodash": "^4.17.21",

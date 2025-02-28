@@ -1,13 +1,13 @@
 import fs from 'fs'
-import { Options as ITFOptions, processString } from 'typescript-formatter'
-import { 
-    generateEnumType, 
-    generateTableInterface, 
+import { type Options as ITFOptions, processString } from 'typescript-formatter'
+import {
+    generateEnumType,
+    generateTableInterface,
     generateTableTypes,
-    getDatabase, 
-    formatNameWithCase 
-} from './common'
-import { CliOptions, Database } from './Types'
+    getDatabase,
+    formatNameWithCase
+} from './common.js'
+import type { CliOptions, Database } from './Types.js'
 
 export async function generateAndWriteModels(
     db: Database,
@@ -47,7 +47,6 @@ export async function generateAndWriteModels(
             // Ensure output directory exists
             fs.mkdirSync(outputDir, { recursive: true })
 
-            console.log(`Writing model file: ${outputPath}`)
             fs.writeFileSync(outputPath, formattedOutput)
         }
     }

@@ -1,7 +1,7 @@
 import debug_func from "debug";
 import { isNumber, isString } from "lodash";
 import mysql from "mysql2/promise";
-import { ParasType } from "./Types";
+import type { ParasType } from "./Types.js";
 
 const debug = debug_func("DAO");
 
@@ -588,12 +588,5 @@ export class DbUtil {
             // This is crucial to prevent connection leaks and pool exhaustion
             connection.release();
         }
-    }
-
-    // Add this type guard method to the class
-    private static isPoolOptions(options: unknown): options is mysql.PoolOptions {
-        return typeof options === 'object' &&
-            options !== null &&
-            !('href' in options); // Simple check to distinguish from URL string
     }
 }
