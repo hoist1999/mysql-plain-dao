@@ -25,7 +25,7 @@ pnpm add mysql-plain-dao
 Generate TypeScript interfaces from your existing MySQL database tables:
 
 ```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/users.ts
+npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/
 ```
 
 Generated TypeScript interface example:

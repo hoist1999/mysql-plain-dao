@@ -8,46 +8,39 @@ Here are some common examples of how to use the CLI:
 
 ### 1. Generate interface for a single table:
 ```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/users.ts
+npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/
 ```
 
-* `npx mysql-plain-dao` means using `npx` to run the executable tool in the _mysql-plain-dao_ package.
+* `-c mysql://user:pass@localhost:3306/dbname` indicates database connection string
+* `-t users` indicates the table name to be generated
+* `-o src/models/` indicates the output directory for generated files
+* By default, this will generate both model and DAO files
 
-* `generate` is a subcommand of the tool, which is used to generate corresponding typescript type files and DAO class files from an existing database.
-
-* `-c mysql://user:pass@localhost:3306/dbname` indicates database connection
-
-* `-t users` indicates the table name to be generated. `users` is a table name used for examples.
-
-* `-o src/models/users.ts` indicates the output file path
-
-### 2. Generate interfaces for multiple tables
-
+### 2. Generate interfaces for multiple tables:
 ```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/index.ts
+npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/
 ```
 
-Here, `-t users` and `-t products` means generating these two data tables at the same time.
+Here, `-t users -t products` means generating files for these two tables at the same time.
 
-
-### 3. Generate interfaces with camelCase column names:
+### 3. Generate only model files:
 ```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -C -o src/models/users.ts
+npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -g model -o src/models/
 ```
 
-* `-C` or `--camelCase` option will convert database column names from snake_case to camelCase in the generated TypeScript interfaces
-* For example:
-  - Database column: `user_id` -> TypeScript property: `userId`
-  - Database column: `created_at` -> TypeScript property: `createdAt`
-  - Database column: `first_name` -> TypeScript property: `firstName`
+* `-g model` specifies to only generate model/interface files
+* You can also use `-g dao` for only DAO files, or `-g all` (default) for both
 
-### 4. Generate interfaces with camelCase for all tables:
+### 4. Generate files with custom directories:
 ```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -C -o src/models/index.ts
-``` 
+npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users \
+  --model-dir src/models/ \
+  --dao-dir src/dao/
+```
 
-The command will generate type files for all data tables because the `-t` option is not provided here.
-
+* `--model-dir` specifies output directory for model files
+* `--dao-dir` specifies output directory for DAO files
+* These override the `-o` option for their respective file types
 
 ## Command Line Options
 
@@ -73,9 +66,7 @@ For example, create a `schemas.json` configuration file in the project root dire
 {
   "conn": "mysql://user:pass@localhost:3306/dbname",
   "table": ["users", "products"],
-  "output": "src/models/index.ts",
-  "camelCase": true,
-  "schema": "public",
+  "output": "src/models/",
   "noHeader": false
 }
 ```
@@ -83,13 +74,13 @@ For example, create a `schemas.json` configuration file in the project root dire
 Then run the command line tool:
 
 ```bash
-npx mysql-plain-dao generate --config schemats.json
+npx mysql-plain-dao --config schemats.json
 ```
 
 This will have the same effect as running the command with individual options:
 
 ```bash
-npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/index.ts -C
+npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/ -C
 ```
 
 
@@ -106,19 +97,20 @@ All options can be set using environment variables with the `SCHEMATS_` prefix:
 |---------------------|-------------|---------|
 | SCHEMATS_CONN | Database connection string | - |
 | SCHEMATS_TABLE | Table name(s) to generate interfaces for | - |
-| SCHEMATS_SCHEMA | Database schema name | - |
-| SCHEMATS_OUTPUT | Output TypeScript file path | - |
-| SCHEMATS_CAMEL_CASE | Convert column names to camelCase | false |
+| SCHEMATS_OUTPUT | Output directory for generated files | - |
+| SCHEMATS_GENERATE | Generation type (model, dao, or all) | all |
+| SCHEMATS_MODEL_DIR | Output directory for model files | Same as OUTPUT |
+| SCHEMATS_DAO_DIR | Output directory for DAO files | Same as OUTPUT |
 | SCHEMATS_NO_HEADER | Skip writing file header comment | false |
-| SCHEMATS_CONFIG | Path to configuration file | schemats.json |
 
 ### Example
 
 ```bash
 SCHEMATS_CONN=mysql://user:pass@localhost:3306/dbname \
-SCHEMATS_TABLE=users \
-SCHEMATS_OUTPUT=src/models/users.ts \
-npx mysql-plain-dao generate
+SCHEMATS_TABLE=users,products \
+SCHEMATS_OUTPUT=src/models/ \
+SCHEMATS_GENERATE=all \
+npx mysql-plain-dao
 ```
 
 This approach is equivalent to using command line arguments but offers better security and maintainability.
