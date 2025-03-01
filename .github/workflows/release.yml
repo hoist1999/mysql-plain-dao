@@ -4,7 +4,10 @@ on:
   push:
     tags:
       - 'v*'
-
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
 jobs:
   test:
     uses: ./.github/workflows/test.yml # 调用测试工作流
@@ -30,13 +33,6 @@ jobs:
         
       - name: Build
         run: pnpm build
-        
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          generate_release_notes: true
           
       - name: Publish to NPM
         run: pnpm publish --no-git-checks
