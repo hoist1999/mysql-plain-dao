@@ -2,15 +2,15 @@
   "name": "mysql-plain-dao",
   "version": "0.1.2-beta.7",
   "description": "A plain dao for mysql, no ORM, just plain sql",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/index.d.mts",
       "default": "./dist/index.js"
     },
     "./generator": {
-      "types": "./dist/generator/index.d.ts",
+      "types": "./dist/generator/index.d.mts",
       "default": "./dist/generator/index.js"
     }
   },
