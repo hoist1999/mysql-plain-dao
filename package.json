@@ -15,7 +15,7 @@
     }
   },
   "bin": {
-    "mysql-plain-dao": "./dist/generator/cli.js"
+    "mysql-plain-dao": "./dist/generator/cli.mjs"
   },
   "files": [
     "dist"
