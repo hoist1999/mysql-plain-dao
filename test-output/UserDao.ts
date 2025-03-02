@@ -1,7 +1,7 @@
 /* tslint:disable */
 
 import { BaseDAO } from 'mysql-plain-dao';
-import { User } from './User';
+import type { User } from './User';
 
 export class UserDao extends BaseDAO<User> {
     constructor() {
@@ -9,4 +9,6 @@ export class UserDao extends BaseDAO<User> {
             table_name: 'user',
         });
     }
+
+    // You can add your own methods below
 }

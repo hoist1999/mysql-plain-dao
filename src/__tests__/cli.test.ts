@@ -16,6 +16,17 @@ const modelFileNews = path.join(TEST_OUTPUT_DIR, 'News.ts');
 const daoFileNews = path.join(TEST_OUTPUT_DIR, 'NewsDao.ts');
 
 describe('CLI Generator Tests', () => {
+    const originalLog = console.log;
+
+    beforeAll(() => {
+        console.log = jest.fn(); // Mock console.log with empty function
+    });
+
+    afterAll(() => {
+        console.log = originalLog; // Restore original console.log
+    });
+
+
     afterEach(() => {
         if (fs.existsSync(TEST_OUTPUT_DIR)) {
             fs.rmSync(TEST_OUTPUT_DIR, { recursive: true });

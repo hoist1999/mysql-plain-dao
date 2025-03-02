@@ -4,3 +4,4 @@ coverage/
 docker-logs/
 .DS_Store
 *.log 
+test-output/

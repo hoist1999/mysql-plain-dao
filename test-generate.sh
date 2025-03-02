@@ -1,2 +1,39 @@
 #!/bin/bash
-pnpm start -c mysql://root:root888@localhost:3306/mysql-plain-dao-test -t user -o ./test-output
+
+# Load environment variables from .env.test-local
+source .env.test-local
+
+# Construct connection string from environment variables
+CONNECTION_STRING="mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
+
+# Execute the generate command
+echo "01 Test generate model and dao files"
+pnpm start -c "$CONNECTION_STRING" -o ./test-output
+
+# Define array of files to check
+files=(
+    "./test-output/News.ts"
+    "./test-output/NewsDao.ts"
+    "./test-output/User.ts"
+    "./test-output/UserDao.ts"
+    "./test-output/UserPermission.ts"
+    "./test-output/UserPermissionDao.ts"
+)
+
+# Check if all files exist
+all_files_exist=true
+for file in "${files[@]}"; do
+    if [ ! -f "$file" ]; then
+        echo "❌ Missing file: $file"
+        all_files_exist=false
+    fi
+done
+
+if [ "$all_files_exist" = true ]; then
+    echo "✅ Test OK: All generated files found"
+    exit 0
+else
+    echo "❌ Test Failed: Some files are missing"
+    exit 1
+fi
+

@@ -28,7 +28,7 @@ const program = new Command();
             '-c, --conn <connection>',
             'Database connection string (MySQL)'
         )
-        .requiredOption(
+        .option(
             '-t, --table <tables...>',
             'table name(s) to generate interfaces for'
         )

@@ -1,6 +1,6 @@
-import { getDbConfigFromEnv } from "../dao/DbConfigLoader.js";
-import { DbUtil } from '../dao/DbUtil.js';
-import { InsertModel } from '../dao/Types.js';
+import { getDbConfigFromEnv } from "../../dao/DbConfigLoader.js";
+import { DbUtil } from '../../dao/DbUtil.js';
+import { InsertModel } from '../../dao/Types.js';
 import { User } from './User.js';
 import { UserDao } from './UserDao.js';
 

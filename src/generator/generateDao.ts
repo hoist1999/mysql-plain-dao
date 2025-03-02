@@ -12,9 +12,6 @@ export async function generateAndWriteDaos(
 ): Promise<void> {
     if (options.generateType === 'dao' || options.generateType === 'all') {
         for (const table of tables) {
-            const daoContent = await generateDao(db, table, schema, options)
-            const formattedOutput = await formatTypeScript(daoContent)
-
             const modelName = toCamelCase(table)
             const fileName = `${modelName}Dao.ts`
 
@@ -25,9 +22,19 @@ export async function generateAndWriteDaos(
             }
             const outputPath = `${outputDir}/${fileName}`
 
+            // Check if file already exists
+            if (fs.existsSync(outputPath)) {
+                console.log(`⏭️  Skipping ${fileName} - file already exists`)
+                continue
+            }
+
+            const daoContent = await generateDao(db, table, schema, options)
+            const formattedOutput = await formatTypeScript(daoContent)
+
             // Ensure output directory exists
             fs.mkdirSync(outputDir, { recursive: true })
             fs.writeFileSync(outputPath, formattedOutput)
+            console.log(`✅ Generated ${fileName}`)
         }
     }
 }
@@ -71,7 +78,7 @@ async function generateDao(
         }
     }
 
-    output += `import { ${modelName} } from '${importPath}';\n\n`
+    output += `import type { ${modelName} } from '${importPath}';\n\n`
 
     // Generate DAO class with PascalCase name
     output += `export class ${modelName}Dao extends ${baseClass}<${modelName}> {\n`
@@ -80,6 +87,8 @@ async function generateDao(
     output += `            table_name: '${table}',\n`
     output += `        });\n`
     output += `    }\n`
+    output += `    \n`
+    output += `    // You can add your own methods below\n`
     output += `}\n`
 
     return output

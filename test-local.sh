@@ -48,19 +48,6 @@ import_schema() {
     fi
 }
 
-# Function to create database
-create_database() {
-    echo "🔨 Creating database '$DB_DATABASE'..."
-    execute_mysql_command "CREATE DATABASE \`$DB_DATABASE\`;"
-    if [ $? -eq 0 ]; then
-        echo "✅ Database created successfully"
-        import_schema || exit 1
-    else
-        echo "❌ Failed to create database"
-        exit 1
-    fi
-}
-
 # Print current config
 echo "📝 Database configuration:"
 echo "  Host: $DB_HOST"
@@ -75,23 +62,18 @@ if ! command -v mysql &> /dev/null; then
     exit 1
 fi
 
-# Check if database exists
-echo "🔍 Checking if database exists..."
-DB_EXISTS=$(execute_mysql_command "SHOW DATABASES LIKE '$DB_DATABASE';" | \
-grep "$DB_DATABASE" > /dev/null; echo "$?")
+# Drop database if exists and create fresh one
+echo "🗑️  Dropping database if exists..."
+execute_mysql_command "DROP DATABASE IF EXISTS \`$DB_DATABASE\`;"
 
-if [ "$DB_EXISTS" -eq 0 ]; then
-    echo "📢 Database '$DB_DATABASE' already exists."
-    read -p "Do you want to recreate the database? (yes/no): " RECREATE
-    if [ "$RECREATE" = "yes" ]; then
-        echo "🗑️  Dropping existing database..."
-        execute_mysql_command "DROP DATABASE \`$DB_DATABASE\`;"
-        create_database
-    else
-        echo "⏭️  Skipping database recreation"
-    fi
+echo "🔨 Creating fresh database..."
+execute_mysql_command "CREATE DATABASE \`$DB_DATABASE\`;"
+if [ $? -eq 0 ]; then
+    echo "✅ Database created successfully"
+    import_schema || exit 1
 else
-    create_database
+    echo "❌ Failed to create database"
+    exit 1
 fi
 
 echo "✨ Database setup complete"
