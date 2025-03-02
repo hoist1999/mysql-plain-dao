@@ -16,6 +16,51 @@ DB_HOST=${DB_HOST:-localhost}
 DB_PORT=${DB_PORT:-3306}
 DB_DATABASE=${DB_DATABASE:-test}
 
+# Function to execute MySQL commands
+execute_mysql_command() {
+    local command=$1
+    mysql \
+    -h"$DB_HOST" \
+    -P"$DB_PORT" \
+    -u"$DB_USER" \
+    ${DB_PASSWORD:+-p"$DB_PASSWORD"} \
+    -e "$command" 2>/dev/null
+}
+
+# Function to import schema
+import_schema() {
+    if [ -f "src/__tests__/sql/schema.sql" ]; then
+        echo "🔨 Initializing database schema..."
+        mysql \
+        -h"$DB_HOST" \
+        -P"$DB_PORT" \
+        -u"$DB_USER" \
+        ${DB_PASSWORD:+-p"$DB_PASSWORD"} \
+        "$DB_DATABASE" < "src/__tests__/sql/schema.sql"
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ Schema initialized successfully"
+            return 0
+        else
+            echo "❌ Failed to initialize schema"
+            return 1
+        fi
+    fi
+}
+
+# Function to create database
+create_database() {
+    echo "🔨 Creating database '$DB_DATABASE'..."
+    execute_mysql_command "CREATE DATABASE \`$DB_DATABASE\`;"
+    if [ $? -eq 0 ]; then
+        echo "✅ Database created successfully"
+        import_schema || exit 1
+    else
+        echo "❌ Failed to create database"
+        exit 1
+    fi
+}
+
 # Print current config
 echo "📝 Database configuration:"
 echo "  Host: $DB_HOST"
@@ -32,48 +77,21 @@ fi
 
 # Check if database exists
 echo "🔍 Checking if database exists..."
-DB_EXISTS=$(mysql \
-    -h"$DB_HOST" \
-    -P"$DB_PORT" \
-    -u"$DB_USER" \
-    ${DB_PASSWORD:+-p"$DB_PASSWORD"} \
-    -e "SHOW DATABASES LIKE '$DB_DATABASE';" 2>/dev/null | \
+DB_EXISTS=$(execute_mysql_command "SHOW DATABASES LIKE '$DB_DATABASE';" | \
 grep "$DB_DATABASE" > /dev/null; echo "$?")
 
 if [ "$DB_EXISTS" -eq 0 ]; then
-    echo "✅ Database '$DB_DATABASE' already exists, skipping creation"
-else
-    # Create fresh database
-    echo "🔨 Creating database '$DB_DATABASE'..."
-    mysql \
-    -h"$DB_HOST" \
-    -P"$DB_PORT" \
-    -u"$DB_USER" \
-    ${DB_PASSWORD:+-p"$DB_PASSWORD"} \
-    -e "CREATE DATABASE \`$DB_DATABASE\`;" 2>/dev/null
-    if [ $? -eq 0 ]; then
-        echo "✅ Database created successfully"
-        
-        # Initialize schema if sql file exists
-        if [ -f "src/__tests__/sql/schema.sql" ]; then
-            echo "🔨 Initializing database schema..."
-            mysql \
-            -h"$DB_HOST" \
-            -P"$DB_PORT" \
-            -u"$DB_USER" \
-            ${DB_PASSWORD:+-p"$DB_PASSWORD"} \
-            "$DB_DATABASE" < "src/__tests__/sql/schema.sql"
-            if [ $? -eq 0 ]; then
-                echo "✅ Schema initialized successfully"
-            else
-                echo "❌ Failed to initialize schema"
-                exit 1
-            fi
-        fi
+    echo "📢 Database '$DB_DATABASE' already exists."
+    read -p "Do you want to recreate the database? (yes/no): " RECREATE
+    if [ "$RECREATE" = "yes" ]; then
+        echo "🗑️  Dropping existing database..."
+        execute_mysql_command "DROP DATABASE \`$DB_DATABASE\`;"
+        create_database
     else
-        echo "❌ Failed to create database"
-        exit 1
+        echo "⏭️  Skipping database recreation"
     fi
+else
+    create_database
 fi
 
 echo "✨ Database setup complete"

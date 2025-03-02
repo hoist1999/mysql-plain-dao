@@ -1,13 +1,12 @@
 import fs from 'fs'
 import { type Options as ITFOptions, processString } from 'typescript-formatter'
 import {
-    generateEnumType,
-    generateTableInterface,
-    generateTableTypes,
     getDatabase,
-    formatNameWithCase
+    toCamelCase,
+    transformColumnName,
+    transformTypeName
 } from './common.js'
-import type { CliOptions, Database } from './Types.js'
+import type { CliOptions, Database, TableDefinition } from './Types.js'
 
 export async function generateAndWriteModels(
     db: Database,
@@ -34,8 +33,8 @@ export async function generateAndWriteModels(
             const formattedOutput = await formatTypeScript(output)
 
             // Generate file name based on table name
-            const modelName = formatNameWithCase(table)
-            const fileName = `${modelName}Model.ts`
+            const modelName = toCamelCase(table)
+            const fileName = `${modelName}.ts`
 
             // Use modelDir if specified, otherwise use outputDir
             const outputDir = options.modelDir || options.outputDir
@@ -97,7 +96,6 @@ export async function typescriptOfTable(db: Database | string,
     let interfaces = ''
     let tableTypes = await db.getTableTypes(table, schema, options)
     interfaces += generateTableTypes(table, tableTypes, options)
-    interfaces += generateTableInterface(table, tableTypes, options)
     return interfaces
 }
 
@@ -119,3 +117,52 @@ export async function formatTypeScript(content: string): Promise<string> {
     const processedResult = await processString('schema.ts', content, formatterOption)
     return processedResult.dest
 }
+
+function generateTableTypes(tableNameRaw: string, tableDefinition: TableDefinition, options: CliOptions) {
+    const tableName = toCamelCase(tableNameRaw)
+    let fields = ''
+
+    Object.entries(tableDefinition).forEach(([columnNameRaw, column]) => {
+        const columnName = transformColumnName(columnNameRaw)
+        const normalizedName = normalizeName(columnName, options)
+        const type = column.tsType || 'any'
+        const nullable = column.nullable ? ' | null' : ''
+        const optionalModifier = column.nullable ? '?' : ''
+
+        fields += `    ${normalizedName}${optionalModifier}: ${type}${nullable};\n`
+    })
+
+    return `
+export interface ${tableName} {
+${fields}}
+`
+}
+
+export function generateEnumType(enumObject: any, options: CliOptions) {
+    let enumString = ''
+    for (let enumNameRaw in enumObject) {
+        const enumName = transformTypeName(enumNameRaw)
+        enumString += `export type ${enumName} = `
+        enumString += enumObject[enumNameRaw].map((v: string) => `'${v}'`).join(' | ')
+        enumString += ';\n'
+    }
+    return enumString
+}
+
+function nameIsReservedKeyword(name: string): boolean {
+    const reservedKeywords = [
+        'string',
+        'number',
+        'package'
+    ]
+    return reservedKeywords.indexOf(name) !== -1
+}
+
+export function normalizeName(name: string, options: CliOptions): string {
+    if (nameIsReservedKeyword(name)) {
+        return name + '_'
+    } else {
+        return name
+    }
+}
+

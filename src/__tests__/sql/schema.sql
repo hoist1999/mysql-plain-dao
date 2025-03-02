@@ -33,3 +33,27 @@ CREATE TABLE IF NOT EXISTS news (
     INDEX idx_status (status),
     INDEX idx_author (author_id)
 );
+
+CREATE TABLE IF NOT EXISTS user_permission (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    permission_name VARCHAR(100) NOT NULL,
+    resource_type VARCHAR(50) NOT NULL,
+    resource_id VARCHAR(100),
+    can_create BOOLEAN DEFAULT false,
+    can_read BOOLEAN DEFAULT true,
+    can_update BOOLEAN DEFAULT false,
+    can_delete BOOLEAN DEFAULT false,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    UNIQUE KEY uk_user_permission_resource (
+        user_id,
+        permission_name,
+        resource_type,
+        resource_id
+    ),
+    INDEX idx_user_id (user_id),
+    INDEX idx_permission_name (permission_name),
+    INDEX idx_resource (resource_type, resource_id)
+);

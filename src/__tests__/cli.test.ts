@@ -10,9 +10,9 @@ const TEST_TABLE_NEWS = 'news';
 const CONNECTION_STRING = `mysql://${dbConfig.user}:${dbConfig.password}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`;
 
 const TEST_OUTPUT_DIR = path.join(__dirname, './test-output');
-const modelFileUser = path.join(TEST_OUTPUT_DIR, 'UserModel.ts');
+const modelFileUser = path.join(TEST_OUTPUT_DIR, 'User.ts');
 const daoFileUser = path.join(TEST_OUTPUT_DIR, 'UserDao.ts');
-const modelFileNews = path.join(TEST_OUTPUT_DIR, 'NewsModel.ts');
+const modelFileNews = path.join(TEST_OUTPUT_DIR, 'News.ts');
 const daoFileNews = path.join(TEST_OUTPUT_DIR, 'NewsDao.ts');
 
 describe('CLI Generator Tests', () => {

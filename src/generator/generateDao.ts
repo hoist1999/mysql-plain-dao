@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
+import { toCamelCase } from './common.js'
 import { formatTypeScript } from './generateModel.js'
 import type { CliOptions, Database } from './Types.js'
-import { formatNameWithCase } from './common.js'
 
 export async function generateAndWriteDaos(
     db: Database,
@@ -15,7 +15,7 @@ export async function generateAndWriteDaos(
             const daoContent = await generateDao(db, table, schema, options)
             const formattedOutput = await formatTypeScript(daoContent)
 
-            const modelName = formatNameWithCase(table)
+            const modelName = toCamelCase(table)
             const fileName = `${modelName}Dao.ts`
 
             // Use daoDir if specified, otherwise use outputDir
@@ -49,8 +49,8 @@ async function generateDao(
     output += `import { ${baseClass} } from 'mysql-plain-dao';\n`
 
     // Calculate model name with proper PascalCase
-    const modelName = formatNameWithCase(table)
-    const modelFileName = `${table}Model` // Keep filename casing unchanged
+    const modelName = toCamelCase(table)
+    const modelFileName = `${modelName}` // Keep filename casing unchanged
 
     // Calculate relative path from daoDir to modelDir
     const daoDir = options.daoDir || options.outputDir
