@@ -30,9 +30,6 @@ jobs:
           
       - name: Install dependencies
         run: pnpm install
-        
-      - name: Build
-        run: pnpm build
           
       - name: Publish to NPM
         run: pnpm publish --no-git-checks
