@@ -1,6 +1,6 @@
 {
   "name": "mysql-plain-dao",
-  "version": "0.1.2-beta.14",
+  "version": "0.1.2-beta.15",
   "description": "A plain dao for mysql, no ORM, just plain sql",
   "type": "module",
   "main": "./dist/index.cjs",
