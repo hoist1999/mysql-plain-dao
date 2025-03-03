@@ -1,7 +1,7 @@
-import SqlString from "sqlstring";
 import type { InsertModel, ParasType, PlainObject, SortCondition } from "./Types.js";
 import { DbUtil } from "./DbUtil.js";
 import { SqlUtil } from "./SqlUtil.js";
+import { format, escape, escapeId } from "mysql2"
 
 export interface Option {
     table_name: string;
@@ -59,7 +59,7 @@ export class BaseDAO<T extends PlainObject> {
 
     /** Insert data */
     async insertAsync(item: InsertModel<T>): Promise<number | null> {
-        const sql = SqlString.format(
+        const sql = format(
             `INSERT INTO ${this.option.table_name} SET ?`,
             item
         );
@@ -82,12 +82,12 @@ export class BaseDAO<T extends PlainObject> {
             .map(
                 (item) =>
                     `(${Object.values(item)
-                        .map((val) => SqlString.escape(val))
+                        .map((val) => escape(val))
                         .join(",")})`
             )
             .join(",");
 
-        let sql = ` INSERT INTO ${this.option.table_name}(${SqlString.escapeId(
+        let sql = ` INSERT INTO ${this.option.table_name}(${escapeId(
             keys
         )}) VALUES ${values_str}`;
 
@@ -131,7 +131,7 @@ export class BaseDAO<T extends PlainObject> {
     /** Update record with provided object */
     async updateAsync(item: T): Promise<number | null> {
         const { id, ...update_item } = item;
-        const sql = SqlString.format(
+        const sql = format(
             `UPDATE ${this.option.table_name} SET ? WHERE id = ?`,
             [update_item, id]
         );
@@ -151,7 +151,7 @@ export class BaseDAO<T extends PlainObject> {
      * @returns Next available sort order
      */
     async getMaxSortOrderAsync(): Promise<number> {
-        let sql = SqlString.format(
+        let sql = format(
             `SELECT max(sort_order) AS max_sorder FROM ??`,
             [this.option.table_name]
         );
@@ -180,7 +180,7 @@ export class BaseDAO<T extends PlainObject> {
         join_table_str: string = ""
     ) {
         const fieldsStr = Array.isArray(fields)
-            ? SqlString.escapeId(fields)
+            ? escapeId(fields)
             : fields;
 
         let sql_list = `

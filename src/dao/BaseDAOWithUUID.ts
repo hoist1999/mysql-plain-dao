@@ -1,7 +1,7 @@
-import SqlString from "sqlstring";
 import type { InsertModel, PlainObject } from "./Types.js";
 import { BaseDAO, type Option } from "./BaseDAO.js";
 import { DbUtil } from "./DbUtil.js";
+import { format } from "mysql2";
 
 /** Base class for all DAO layers with UUID support
  * Extends basic CRUD capabilities by adding UUID column for enhanced data security
@@ -14,7 +14,7 @@ export class BaseDAOWithUUID<T extends PlainObject> extends BaseDAO<T> {
 	/** Insert data with auto-generated UUID */
 	async insertWithUuidAsync(item: InsertModel<T>): Promise<number | null> {
 		const { uuid, ...newInsertItem } = item;
-		const sql = SqlString.format(`INSERT INTO ${this.option.table_name} SET uuid = uuid(), ?`, newInsertItem);
+		const sql = format(`INSERT INTO ${this.option.table_name} SET uuid = uuid(), ?`, newInsertItem);
 		const insertId = await DbUtil.executeInsertAsync(sql);
 		return insertId;
 	}
@@ -32,7 +32,7 @@ export class BaseDAOWithUUID<T extends PlainObject> extends BaseDAO<T> {
 	/** Update record by UUID with provided object */
 	async updateByUuidAsync(item: T) {
 		const { uuid, ...updateItem } = item;
-		const sql = SqlString.format(
+		const sql = format(
 			`UPDATE ${this.option.table_name} SET ? WHERE uuid = ?`,
 			[updateItem, uuid]
 		);

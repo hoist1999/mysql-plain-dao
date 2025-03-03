@@ -1,28 +1,19 @@
-import sqlstring from "sqlstring";
+import { escapeId, format } from "mysql2";
 import { OrderBy, type SortCondition } from "./Types.js";
 
 /** Utility class for constructing SQL statements
  */
 export class SqlUtil {
   static like(field: string, condition_value: string) {
-    const like_str = `${sqlstring.escapeId(field)} LIKE ${sqlstring.escape(
-      "%" + condition_value + "%"
-    )}`;
-    return like_str;
+    return format(`${escapeId(field)} LIKE ?`, ["%" + condition_value + "%"]);
   }
 
   static equal(field: string, condition_value: string | number) {
-    const like_str = `${sqlstring.escapeId(field)} = ${sqlstring.escape(
-      condition_value
-    )}`;
-    return like_str;
+    return format(`${escapeId(field)} = ?`, [condition_value]);
   }
 
   static not_equal(field: string, condition_value: string) {
-    const like_str = `${sqlstring.escapeId(field)} != ${sqlstring.escape(
-      condition_value
-    )}`;
-    return like_str;
+    return format(`${escapeId(field)} != ?`, [condition_value]);
   }
 
   /**
@@ -36,7 +27,7 @@ export class SqlUtil {
     const pageSizeInt =
       typeof pageSize === "string" ? parseInt(pageSize) : pageSize;
     let start = pageSizeInt * (currentInt - 1);
-    let pager_sql = sqlstring.format(` LIMIT ?,?`, [start, pageSizeInt]);
+    let pager_sql = format(` LIMIT ?,?`, [start, pageSizeInt]);
     return pager_sql;
   }
 
@@ -48,7 +39,7 @@ export class SqlUtil {
   static limit(start: number | string, length: number | string) {
     const startInt = typeof start === "string" ? parseInt(start) : start;
     const lengthInt = typeof length === "string" ? parseInt(length) : length;
-    let pager_sql = sqlstring.format(` LIMIT ?,?`, [startInt, lengthInt]);
+    let pager_sql = format(` LIMIT ?,?`, [startInt, lengthInt]);
     return pager_sql;
   }
 
@@ -57,14 +48,10 @@ export class SqlUtil {
     if (typeof conditions === "string") {
       return conditions;
     } else {
-      // Add sorting conditions if needed
       const { order = OrderBy.ASC, field = "" } = conditions;
       let order_sql = "";
       if (order && field) {
-        let escape_field = sqlstring.escape(field);
-        escape_field = escape_field.substring(1, escape_field.length - 1); // Remove surrounding quotes
-
-        order_sql = ` ORDER BY ${escape_field} `;
+        order_sql = ` ORDER BY ${escapeId(field)} `;
         if (order === OrderBy.DESC) {
           order_sql += " DESC ";
         } else if (order === OrderBy.ASC) {

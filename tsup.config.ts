@@ -7,7 +7,7 @@ export default defineConfig([
       'index': 'src/dao/index.ts',
       'generator/index': 'src/generator/index.ts',
     },
-    format: ['esm'],
+    format: ['esm', 'cjs'],
     dts: true,
     splitting: false,
     sourcemap: true,
@@ -18,7 +18,7 @@ export default defineConfig([
     entry: {
       'generator/cli': 'src/generator/cli.ts',
     },
-    format: ['esm'],
+    format: ['esm', 'cjs'],
     dts: false,
     splitting: false,
     sourcemap: true,
