@@ -1,29 +1,17 @@
 {
   "name": "mysql-plain-dao",
-  "version": "0.1.2-beta.15",
+  "version": "0.1.2-beta.16",
   "description": "A plain dao for mysql, no ORM, just plain sql",
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
-    },
-    "./generator": {
-      "types": "./dist/generator/index.d.ts",
-      "require": "./dist/generator/index.cjs",
-      "import": "./dist/generator/index.js"
-    }
-  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
-    "mysql-plain-dao": "./dist/generator/cli.cjs"
+    "mysql-plain-dao": "./dist/generator/cli.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "rimraf dist && tsc",
     "test": "NODE_ENV=test-local DEBUG=-DAO jest --runInBand",
     "test-in-docker": "NODE_ENV=test-in-docker DEBUG=-DAO jest --runInBand",
     "prepublishOnly": "pnpm build",
@@ -50,9 +38,9 @@
     "@types/yargs": "^17.0.33",
     "bumpp": "^10.0.3",
     "jest": "^29.7.0",
+    "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "tsup": "^8.0.2",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   },
