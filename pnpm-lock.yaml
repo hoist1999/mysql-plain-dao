@@ -32,9 +32,6 @@ importers:
       typescript-formatter:
         specifier: ^7.2.2
         version: 7.2.2(typescript@5.8.2)
-      yargs:
-        specifier: ^17.7.2
-        version: 17.7.2
     devDependencies:
       '@types/debug':
         specifier: ^4.1.12
@@ -51,9 +48,6 @@ importers:
       '@types/pluralize':
         specifier: ^0.0.33
         version: 0.0.33
-      '@types/yargs':
-        specifier: ^17.0.33
-        version: 17.0.33
       bumpp:
         specifier: ^10.0.3
         version: 10.0.3
