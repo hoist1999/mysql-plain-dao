@@ -1,7 +1,7 @@
-import type { InsertModel, ParasType, PlainObject, SortCondition } from "./Types.js";
-import { DbUtil } from "./DbUtil.js";
-import { SqlUtil } from "./SqlUtil.js";
-import { format, escape, escapeId } from "mysql2"
+import { escape, escapeId, format } from "mysql2";
+import { DbUtil } from "./DbUtil";
+import { SqlUtil } from "./SqlUtil";
+import type { InsertModel, ParasType, PlainObject, SortCondition } from "./Types";
 
 export interface Option {
     table_name: string;

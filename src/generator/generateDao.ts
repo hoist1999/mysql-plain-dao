@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
-import { toCamelCase } from './common.js'
-import { formatTypeScript } from './generateModel.js'
-import type { CliOptions, Database } from './Types.js'
+import { toCamelCase } from './common'
+import { formatTypeScript } from './generateModel'
+import type { CliOptions, Database } from './Types'
 
 export async function generateAndWriteDaos(
     db: Database,

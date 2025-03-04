@@ -1,6 +1,6 @@
-import type { InsertModel, PlainObject } from "./Types.js";
-import { BaseDAO, type Option } from "./BaseDAO.js";
-import { DbUtil } from "./DbUtil.js";
+import type { InsertModel, PlainObject } from "./Types";
+import { BaseDAO, type Option } from "./BaseDAO";
+import { DbUtil } from "./DbUtil";
 import { format } from "mysql2";
 
 /** Base class for all DAO layers with UUID support

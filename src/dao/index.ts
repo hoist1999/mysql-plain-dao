@@ -1,11 +1,11 @@
 // Export all types
-export * from './Types.js'
-export * from './TypeGuard.js'
+export * from './Types'
+export * from './TypeGuard'
 
 // Base DAO classes
-export * from './BaseDAO.js'
-export * from './BaseDAOWithUUID.js'
+export * from './BaseDAO'
+export * from './BaseDAOWithUUID'
 
 // Utility modules
-export * from './DbUtil.js'
-export * from './SqlUtil.js'
+export * from './DbUtil'
+export * from './SqlUtil'

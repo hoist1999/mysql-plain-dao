@@ -1,7 +1,7 @@
 import debug_func from "debug";
 import { isNumber, isString } from "lodash";
 import mysql from "mysql2/promise";
-import type { ParasType } from "./Types.js";
+import type { ParasType } from "./Types";
 
 const debug = debug_func("DAO");
 

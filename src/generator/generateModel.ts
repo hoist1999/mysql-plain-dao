@@ -5,8 +5,8 @@ import {
     toCamelCase,
     transformColumnName,
     transformTypeName
-} from './common.js'
-import type { CliOptions, Database, TableDefinition } from './Types.js'
+} from './common'
+import type { CliOptions, Database, TableDefinition } from './Types'
 
 export async function generateAndWriteModels(
     db: Database,

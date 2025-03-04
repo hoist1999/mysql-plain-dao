@@ -1,5 +1,5 @@
 import { escapeId, format } from "mysql2";
-import { OrderBy, type SortCondition } from "./Types.js";
+import { OrderBy, type SortCondition } from "./Types";
 
 /** Utility class for constructing SQL statements
  */

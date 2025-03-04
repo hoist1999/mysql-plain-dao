@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import type { Database } from './Types.js'
-import { MysqlDatabase } from './schemaMysql.js'
+import type { Database } from './Types'
+import { MysqlDatabase } from './schemaMysql'
 
 export enum SQLVersion {
     MYSQL = 2,

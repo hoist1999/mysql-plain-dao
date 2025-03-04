@@ -1,7 +1,7 @@
-import { getDatabase } from './common.js'
-import { generateAndWriteDaos } from './generateDao.js'
-import { generateAndWriteModels } from './generateModel.js'
-import type { CliOptions, Database } from './Types.js'
+import { getDatabase } from './common'
+import { generateAndWriteDaos } from './generateDao'
+import { generateAndWriteModels } from './generateModel'
+import type { CliOptions, Database } from './Types'
 
 
 // execute generate command

@@ -12,8 +12,8 @@
  */
 
 import { Command } from 'commander';
-import type { CliOptions, GenerateType } from './Types.js';
-import { executeGenerateAsync } from './generate.js';
+import type { CliOptions, GenerateType } from './Types';
+import { executeGenerateAsync } from './generate';
 
 const program = new Command();
 

@@ -1,8 +1,8 @@
-import { getDbConfigFromEnv } from "../../dao/DbConfigLoader.js";
-import { DbUtil } from '../../dao/DbUtil.js';
-import { InsertModel } from '../../dao/Types.js';
-import { User } from './User.js';
-import { UserDao } from './UserDao.js';
+import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
+import { DbUtil } from '../../dao/DbUtil';
+import { InsertModel } from '../../dao/Types';
+import { User } from './User';
+import { UserDao } from './UserDao';
 
 describe('UserDao', () => {
     let userDao: UserDao;
