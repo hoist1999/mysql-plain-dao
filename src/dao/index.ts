@@ -3,8 +3,8 @@ export * from './Types'
 export * from './TypeGuard'
 
 // Base DAO classes
-export * from './BaseDAO'
-export * from './BaseDAOWithUUID'
+export * from './BaseDao'
+export * from './BaseDaoWithUUID'
 
 // Utility modules
 export * from './DbUtil'

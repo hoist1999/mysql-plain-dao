@@ -4,7 +4,7 @@ This document describes how to run tests for mysql-plain-dao.
 
 ## Unit Tests
 
-To test the BaseDAO functionality, please refer to `UserDao.test.ts` which includes examples of CRUD operations.
+To test the BaseDao functionality, please refer to `UserDao.test.ts` which includes examples of CRUD operations.
 
 ## Running Tests
 

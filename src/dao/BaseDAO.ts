@@ -3,9 +3,10 @@ import { DbUtil } from "./DbUtil";
 import { SqlUtil } from "./SqlUtil";
 import type { InsertModel, ParasType, PlainObject, SortCondition } from "./Types";
 
-export interface Option {
+export interface BaseDaoOption {
     table_name: string;
     json_columns?: string[];
+    id_field?: string;
 }
 
 export interface PagerParams {
@@ -22,23 +23,20 @@ export interface PagerParams {
 /** Base class for all DAO layers, provides basic CRUD capabilities upon inheritance
  * @author hoist1999
  */
-export class BaseDAO<T extends PlainObject> {
-    protected option: Option;
+export class BaseDao<T extends PlainObject> {
+    protected tableName: string;
+    protected jsonColumns: string[];
+    protected idField: string;
 
-    constructor(option: Option) {
-        const DEFAULT_OPTION: Partial<Option> = {
-            json_columns: [],
-        };
-
-        this.option = {
-            ...DEFAULT_OPTION,
-            ...option,
-        };
+    constructor(option: BaseDaoOption) {
+        this.tableName = option.table_name;
+        this.jsonColumns = option.json_columns !== undefined ? option.json_columns : [];
+        this.idField = option.id_field !== undefined ? option.id_field : 'id';
     }
 
     /** Get current table name */
     getTableName() {
-        return this.option.table_name;
+        return this.tableName;
     }
 
     /** Get data collection */
@@ -60,7 +58,7 @@ export class BaseDAO<T extends PlainObject> {
     /** Insert data */
     async insertAsync(item: InsertModel<T>): Promise<number | null> {
         const sql = format(
-            `INSERT INTO ${this.option.table_name} SET ?`,
+            `INSERT INTO ${this.tableName} SET ?`,
             item
         );
         const insertId = await DbUtil.executeInsertAsync(sql);
@@ -87,7 +85,7 @@ export class BaseDAO<T extends PlainObject> {
             )
             .join(",");
 
-        let sql = ` INSERT INTO ${this.option.table_name}(${escapeId(
+        let sql = ` INSERT INTO ${this.tableName}(${escapeId(
             keys
         )}) VALUES ${values_str}`;
 
@@ -111,7 +109,7 @@ export class BaseDAO<T extends PlainObject> {
 
     /** Get all data records */
     async getListAsync(): Promise<Array<T>> {
-        const sql = `SELECT * FROM ${this.option.table_name} `;
+        const sql = `SELECT * FROM ${this.tableName} `;
         const item_list = await DbUtil.executeGetListAsync<T>(sql);
         DbUtil.parseJson(item_list, "json_data");
 
@@ -120,7 +118,7 @@ export class BaseDAO<T extends PlainObject> {
 
     /** Get single record by ID */
     async getByIdAsync(id: number): Promise<T | null> {
-        const sql = `SELECT * FROM ${this.option.table_name} WHERE id = ?`;
+        const sql = `SELECT * FROM ${this.tableName} WHERE ${this.idField} = ?`;
         const item = await DbUtil.executeGetSingleAsync<T>(sql, [id]);
         if (item) {
             DbUtil.parseJson(item, "json_data");
@@ -130,9 +128,9 @@ export class BaseDAO<T extends PlainObject> {
 
     /** Update record with provided object */
     async updateAsync(item: T): Promise<number | null> {
-        const { id, ...update_item } = item;
+        const { [this.idField]: id, ...update_item } = item;
         const sql = format(
-            `UPDATE ${this.option.table_name} SET ? WHERE id = ?`,
+            `UPDATE ${this.tableName} SET ? WHERE ${this.idField} = ?`,
             [update_item, id]
         );
 
@@ -141,7 +139,7 @@ export class BaseDAO<T extends PlainObject> {
 
     /** Delete record by ID */
     async deleteByIdAsync(id: number): Promise<number | null> {
-        const sql = `DELETE FROM ${this.option.table_name} WHERE id = ?`;
+        const sql = `DELETE FROM ${this.tableName} WHERE ${this.idField} = ?`;
         let result = await DbUtil.executeDeleteAsync(sql, [id]);
         return result;
     }
@@ -153,7 +151,7 @@ export class BaseDAO<T extends PlainObject> {
     async getMaxSortOrderAsync(): Promise<number> {
         let sql = format(
             `SELECT max(sort_order) AS max_sorder FROM ??`,
-            [this.option.table_name]
+            [this.tableName]
         );
         let current_max_sort_order = await DbUtil.executeGetNumberAsync(sql) ?? 0;
         return current_max_sort_order + 1;
@@ -185,7 +183,7 @@ export class BaseDAO<T extends PlainObject> {
 
         let sql_list = `
             SELECT ${fieldsStr}
-            FROM ${this.option.table_name}
+            FROM ${this.tableName}
             ${join_table_str}
             ${where_str}
             ${SqlUtil.orderBy(orderPara || '')}
@@ -199,7 +197,7 @@ export class BaseDAO<T extends PlainObject> {
         // DbUtil.parse_json(list, "json_data");
 
         // Get total count
-        let sql_total = ` SELECT count(*) AS total FROM ${this.option.table_name} ${where_str} `;
+        let sql_total = ` SELECT count(*) AS total FROM ${this.tableName} ${where_str} `;
         let total = await DbUtil.executeGetNumberAsync(sql_total) ?? 0;
 
         return { list, total };

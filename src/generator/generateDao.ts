@@ -50,7 +50,7 @@ async function generateDao(
     // Get primary key info
     const primaryKey = await db.getPrimaryKey(schema, table)
     const isUUID = primaryKey?.dataType?.toLowerCase().includes('uuid')
-    const baseClass = isUUID ? 'BaseDAOWithUUID' : 'BaseDAO'
+    const baseClass = isUUID ? 'BaseDaoWithUUID' : 'BaseDao'
 
     // Add imports
     output += `import { ${baseClass} } from 'mysql-plain-dao';\n`
