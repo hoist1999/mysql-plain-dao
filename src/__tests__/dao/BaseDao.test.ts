@@ -4,7 +4,7 @@ import { News, enum_status } from '../generated_dao/News';
 import { NewsDao } from '../generated_dao/NewsDao';
 import { User } from '../generated_dao/User';
 import { UserDao } from '../generated_dao/UserDao';
-import { InsertModel } from './../../dao/Types';
+import type { InsertModel } from './../../dao/Types';
 
 describe('NewsDao', () => {
     let newsDao: NewsDao;
