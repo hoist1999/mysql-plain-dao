@@ -1,13 +1,10 @@
 import { escape, escapeId, format } from "mysql2";
 import { v4 as uuidv4 } from 'uuid';
-import { CommonDao } from "./CommonDao";
+import { CommonDao, CommonDaoOption } from "./CommonDao";
 import { DbUtil } from "./DbUtil";
 import type { InsertModel, PlainObject } from "./Types";
 
-export interface BaseDaoUuidOption {
-	table_name: string;
-	json_columns?: string[];
-	id_field?: string;
+export interface BaseDaoUuidOption extends CommonDaoOption {
 	uuid_field?: string;
 }
 

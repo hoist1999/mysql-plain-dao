@@ -190,25 +190,25 @@ describe('BookDao', () => {
         });
     });
 
-    // describe('BookDao with custom UUID field', () => {
-    //     it('should insert book with custom UUID field', async () => {
-    //         class CustomBookDao extends BaseDaoUuid<Book> {
-    //             constructor() {
-    //                 super({
-    //                     table_name: 'book',
-    //                     uuidField: 'uuid'
-    //                 });
-    //             }
-    //         }
+    describe('BookDao with custom UUID field', () => {
+        it('should insert book with custom UUID field', async () => {
+            class CustomBookDao extends BaseDaoUuid<Book> {
+                constructor() {
+                    super({
+                        table_name: 'book',
+                        uuid_field: 'uuid'
+                    });
+                }
+            }
 
-    //         const tempBookDao = new CustomBookDao();
-    //         const insertBookUuid = await tempBookDao.insertAsync(testBook);
+            const tempBookDao = new CustomBookDao();
+            const insertBookUuid = await tempBookDao.insertAsync(testBook);
 
-    //         expect(insertBookUuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
-    //         const insertedBook = await tempBookDao.getByUuidAsync(insertBookUuid!);
-    //         expect(insertedBook).toBeDefined();
-    //         expect(insertedBook!.uuid).toBeDefined();
-    //         expect(insertedBook!.uuid).toBe(insertBookUuid);
-    //     });
-    // });
+            expect(insertBookUuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+            const insertedBook = await tempBookDao.getByUuidAsync(insertBookUuid!);
+            expect(insertedBook).toBeDefined();
+            expect(insertedBook!.uuid).toBeDefined();
+            expect(insertedBook!.uuid).toBe(insertBookUuid);
+        });
+    });
 });

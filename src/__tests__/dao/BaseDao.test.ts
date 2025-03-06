@@ -1,10 +1,11 @@
+import { BaseDao } from "../../dao/BaseDao";
 import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
 import { DbUtil } from '../../dao/DbUtil';
+import type { InsertModel } from '../../dao/Types';
 import { News, enum_status } from '../generated_dao/News';
 import { NewsDao } from '../generated_dao/NewsDao';
 import { User } from '../generated_dao/User';
 import { UserDao } from '../generated_dao/UserDao';
-import type { InsertModel } from '../../dao/Types';
 
 describe('NewsDao', () => {
     let newsDao: NewsDao;
@@ -202,4 +203,26 @@ describe('NewsDao', () => {
             await DbUtil.executeAsync('DELETE FROM news');
         });
     });
+
+
+    // userdao with custom uuid field
+    describe('UserDao with custom UUID field', () => {
+        it('should bulk insert users with custom UUID field', async () => {
+            class CustomNewsDao extends BaseDao<News> {
+                constructor() {
+                    super({
+                        table_name: 'news',
+                        id_field: 'id'
+                    });
+                }
+            }
+
+            const tempNewsDao = new CustomNewsDao();
+            const insertedId = await tempNewsDao.insertAsync(testNews);
+            const insertedNews = await tempNewsDao.getByIdAsync(insertedId!);
+            expect(insertedNews).toBeDefined();
+            expect(insertedNews!.id).toBe(insertedId);
+        });
+    });
+
 }); 
