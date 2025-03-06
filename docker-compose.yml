@@ -44,7 +44,7 @@ services:
         echo 'All files in /app (node_modules is ignored here)' > /root/.npm/_logs/files.log &&
         tree -a -I 'node_modules|.git' /app >> /root/.npm/_logs/files.log &&
         set -o pipefail &&
-        pnpm test 2>&1 | tee /root/.npm/_logs/jest-output.log
+        pnpm test-docker 2>&1 | tee /root/.npm/_logs/jest-output.log
       "
     depends_on:
       mysql_test:

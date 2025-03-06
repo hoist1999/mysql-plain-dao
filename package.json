@@ -23,7 +23,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
     "test": "NODE_ENV=test-local DEBUG=-DAO jest --runInBand",
-    "test-in-docker": "NODE_ENV=test-in-docker DEBUG=-DAO jest --runInBand",
+    "test-docker": "NODE_ENV=test-docker DEBUG=-DAO jest --runInBand",
     "prepublishOnly": "pnpm build",
     "version:patch": "pnpm version patch",
     "version:minor": "pnpm version minor",
