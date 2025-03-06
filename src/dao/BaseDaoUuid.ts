@@ -1,17 +1,14 @@
 import { escape, escapeId, format } from "mysql2";
 import { v4 as uuidv4 } from 'uuid';
-import type { BaseDaoOption } from "./BaseDao";
 import { CommonDao } from "./CommonDao";
 import { DbUtil } from "./DbUtil";
 import type { InsertModel, PlainObject } from "./Types";
 
-export interface BaseDaoUuidOption extends BaseDaoOption {
-	/**
-	 * The field name for UUID in the database table
-	 * Default is 'uuid' if not specified
-	 * Example: 'uuid', 'guid', 'unique_id'
-	 */
-	uuidField?: string;
+export interface BaseDaoUuidOption {
+	table_name: string;
+	json_columns?: string[];
+	id_field?: string;
+	uuid_field?: string;
 }
 
 /** DAO class for tables with UUID as primary key */
@@ -20,7 +17,7 @@ export class BaseDaoUuid<T extends PlainObject> extends CommonDao<T> {
 
 	constructor(option: BaseDaoUuidOption) {
 		super(option);
-		this.uuid_field = option.uuidField !== undefined ? option.uuidField : "uuid";
+		this.uuid_field = option.uuid_field !== undefined ? option.uuid_field : "uuid";
 	}
 
 	/** 
@@ -31,7 +28,7 @@ export class BaseDaoUuid<T extends PlainObject> extends CommonDao<T> {
 		const { [this.uuid_field]: uuid, ...newInsertItem } = item;
 		const generatedUuid = uuidv4();
 		const sql = format(
-			`INSERT INTO ${this.tableName} SET ${this.uuid_field} = ?, ?`,
+			`INSERT INTO ${this.table_name} SET ${this.uuid_field} = ?, ?`,
 			[generatedUuid, newInsertItem]
 		);
 		await DbUtil.executeInsertAsync(sql);
@@ -40,7 +37,7 @@ export class BaseDaoUuid<T extends PlainObject> extends CommonDao<T> {
 
 	/** Get single record by UUID */
 	async getByUuidAsync(uuid: string): Promise<T | null> {
-		const sql = `SELECT * FROM ${this.tableName} WHERE ${this.uuid_field} = ?`;
+		const sql = `SELECT * FROM ${this.table_name} WHERE ${this.uuid_field} = ?`;
 		const item = await DbUtil.executeGetSingleAsync<T>(sql, [uuid]);
 		if (item) {
 			DbUtil.parseJson(item, "json_data");
@@ -52,7 +49,7 @@ export class BaseDaoUuid<T extends PlainObject> extends CommonDao<T> {
 	async updateAsync(item: T): Promise<number | null> {
 		const { [this.uuid_field]: uuid, ...updateItem } = item;
 		const sql = format(
-			`UPDATE ${this.tableName} SET ? WHERE ${this.uuid_field} = ?`,
+			`UPDATE ${this.table_name} SET ? WHERE ${this.uuid_field} = ?`,
 			[updateItem, uuid]
 		);
 		return await DbUtil.executeUpdateAsync(sql);
@@ -85,7 +82,7 @@ export class BaseDaoUuid<T extends PlainObject> extends CommonDao<T> {
 			)
 			.join(",");
 
-		let sql = `INSERT INTO ${this.tableName}(${keys.map(k => escapeId(k)).join(',')}) VALUES ${values_str}`;
+		let sql = `INSERT INTO ${this.table_name}(${keys.map(k => escapeId(k)).join(',')}) VALUES ${values_str}`;
 
 		await DbUtil.queryAsync(sql);
 		return items_with_uuid;
@@ -93,7 +90,7 @@ export class BaseDaoUuid<T extends PlainObject> extends CommonDao<T> {
 
 	/** Delete record by UUID */
 	async deleteByUuidAsync(uuid: string) {
-		const sql = `DELETE FROM ${this.tableName} WHERE ${this.uuid_field} = ?`;
+		const sql = `DELETE FROM ${this.table_name} WHERE ${this.uuid_field} = ?`;
 		let result = await DbUtil.executeAsync(sql, [uuid]);
 		return result;
 	}

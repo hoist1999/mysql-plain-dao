@@ -18,7 +18,7 @@ export class BaseDao<T extends PlainObject> extends CommonDao<T> {
     /** Insert data */
     async insertAsync(item: InsertModel<T>): Promise<number | null> {
         const sql = format(
-            `INSERT INTO ${this.tableName} SET ?`,
+            `INSERT INTO ${this.table_name} SET ?`,
             item
         );
         const insertId = await DbUtil.executeInsertAsync(sql);
@@ -45,7 +45,7 @@ export class BaseDao<T extends PlainObject> extends CommonDao<T> {
             )
             .join(",");
 
-        let sql = ` INSERT INTO ${this.tableName}(${escapeId(
+        let sql = ` INSERT INTO ${this.table_name}(${escapeId(
             keys
         )}) VALUES ${values_str}`;
 
@@ -70,7 +70,7 @@ export class BaseDao<T extends PlainObject> extends CommonDao<T> {
 
     /** Get single record by ID */
     async getByIdAsync(id: number): Promise<T | null> {
-        const sql = `SELECT * FROM ${this.tableName} WHERE ${this.idField} = ?`;
+        const sql = `SELECT * FROM ${this.table_name} WHERE ${this.id_field} = ?`;
         const item = await DbUtil.executeGetSingleAsync<T>(sql, [id]);
         if (item) {
             DbUtil.parseJson(item, "json_data");
@@ -80,9 +80,9 @@ export class BaseDao<T extends PlainObject> extends CommonDao<T> {
 
     /** Update record with provided object */
     async updateAsync(item: T): Promise<number | null> {
-        const { [this.idField]: id, ...update_item } = item;
+        const { [this.id_field]: id, ...update_item } = item;
         const sql = format(
-            `UPDATE ${this.tableName} SET ? WHERE ${this.idField} = ?`,
+            `UPDATE ${this.table_name} SET ? WHERE ${this.id_field} = ?`,
             [update_item, id]
         );
 
@@ -91,7 +91,7 @@ export class BaseDao<T extends PlainObject> extends CommonDao<T> {
 
     /** Delete record by ID */
     async deleteByIdAsync(id: number): Promise<number | null> {
-        const sql = `DELETE FROM ${this.tableName} WHERE ${this.idField} = ?`;
+        const sql = `DELETE FROM ${this.table_name} WHERE ${this.id_field} = ?`;
         let result = await DbUtil.executeDeleteAsync(sql, [id]);
         return result;
     }

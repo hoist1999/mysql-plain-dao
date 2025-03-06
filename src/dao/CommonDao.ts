@@ -24,19 +24,19 @@ export interface PagerParams {
  * @author hoist1999
  */
 export class CommonDao<T extends PlainObject> {
-    protected tableName: string;
-    protected jsonColumns: string[];
-    protected idField: string;
+    protected table_name: string;
+    protected json_columns: string[];
+    protected id_field: string;
 
     constructor(option: CommonDaoOption) {
-        this.tableName = option.table_name;
-        this.jsonColumns = option.json_columns !== undefined ? option.json_columns : [];
-        this.idField = option.id_field !== undefined ? option.id_field : 'id';
+        this.table_name = option.table_name;
+        this.json_columns = option.json_columns !== undefined ? option.json_columns : [];
+        this.id_field = option.id_field !== undefined ? option.id_field : 'id';
     }
 
     /** Get current table name */
     getTableName() {
-        return this.tableName;
+        return this.table_name;
     }
 
     /** Get data collection */
@@ -109,7 +109,7 @@ export class CommonDao<T extends PlainObject> {
 
     /** Get all data records */
     async getListAsync(): Promise<Array<T>> {
-        const sql = `SELECT * FROM ${this.tableName} `;
+        const sql = `SELECT * FROM ${this.table_name} `;
         const item_list = await DbUtil.executeGetListAsync<T>(sql);
         DbUtil.parseJson(item_list, "json_data");
 
@@ -151,7 +151,7 @@ export class CommonDao<T extends PlainObject> {
     async getMaxSortOrderAsync(): Promise<number> {
         let sql = format(
             `SELECT max(sort_order) AS max_sorder FROM ??`,
-            [this.tableName]
+            [this.table_name]
         );
         let current_max_sort_order = await DbUtil.executeGetNumberAsync(sql) ?? 0;
         return current_max_sort_order + 1;
@@ -183,7 +183,7 @@ export class CommonDao<T extends PlainObject> {
 
         let sql_list = `
             SELECT ${fieldsStr}
-            FROM ${this.tableName}
+            FROM ${this.table_name}
             ${join_table_str}
             ${where_str}
             ${SqlUtil.orderBy(orderPara || '')}
@@ -197,7 +197,7 @@ export class CommonDao<T extends PlainObject> {
         // DbUtil.parse_json(list, "json_data");
 
         // Get total count
-        let sql_total = ` SELECT count(*) AS total FROM ${this.tableName} ${where_str} `;
+        let sql_total = ` SELECT count(*) AS total FROM ${this.table_name} ${where_str} `;
         let total = await DbUtil.executeGetNumberAsync(sql_total) ?? 0;
 
         return { list, total };
