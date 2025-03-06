@@ -73,7 +73,7 @@ export function getDbConfigFromEnv(): mysql.PoolOptions {
 
     debug('DB Config:', {
         ...config,
-        password: '****** (hidden)' // Hide password in logs
+        password: config.password ? '****** (hidden)' : 'empty' // Hide password in logs
     });
 
     return config;

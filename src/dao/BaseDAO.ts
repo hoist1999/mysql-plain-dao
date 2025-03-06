@@ -1,7 +1,7 @@
 import { escape, escapeId, format } from "mysql2";
+import { CommonDao } from "./CommonDao";
 import { DbUtil } from "./DbUtil";
-import { SqlUtil } from "./SqlUtil";
-import type { InsertModel, ParasType, PlainObject, SortCondition } from "./Types";
+import type { InsertModel, PlainObject } from "./Types";
 
 export interface BaseDaoOption {
     table_name: string;
@@ -9,50 +9,10 @@ export interface BaseDaoOption {
     id_field?: string;
 }
 
-export interface PagerParams {
-    /** Current page number */
-    current?: number | string;
-    /** Page size */
-    pageSize?: number | string;
-    /** Sort order */
-    orderPara?: SortCondition | string;
-    /** Search parameters from form */
-    searchParams?: Record<string, string>;
-}
-
-/** Base class for all DAO layers, provides basic CRUD capabilities upon inheritance
- * @author hoist1999
- */
-export class BaseDao<T extends PlainObject> {
-    protected tableName: string;
-    protected jsonColumns: string[];
-    protected idField: string;
-
+/** Base DAO class for tables with auto-increment ID */
+export class BaseDao<T extends PlainObject> extends CommonDao<T> {
     constructor(option: BaseDaoOption) {
-        this.tableName = option.table_name;
-        this.jsonColumns = option.json_columns !== undefined ? option.json_columns : [];
-        this.idField = option.id_field !== undefined ? option.id_field : 'id';
-    }
-
-    /** Get current table name */
-    getTableName() {
-        return this.tableName;
-    }
-
-    /** Get data collection */
-    protected async executeGetListAsync(
-        sql: string,
-        paras?: ParasType
-    ): Promise<T[]> {
-        return await DbUtil.executeGetListAsync(sql, paras);
-    }
-
-    /** Get single data record */
-    protected async executeGetSingleAsync(
-        sql: string,
-        paras?: ParasType
-    ): Promise<T | null> {
-        return await DbUtil.executeGetSingleAsync<T>(sql, paras);
+        super(option);
     }
 
     /** Insert data */
@@ -107,14 +67,6 @@ export class BaseDao<T extends PlainObject> {
         // }
     }
 
-    /** Get all data records */
-    async getListAsync(): Promise<Array<T>> {
-        const sql = `SELECT * FROM ${this.tableName} `;
-        const item_list = await DbUtil.executeGetListAsync<T>(sql);
-        DbUtil.parseJson(item_list, "json_data");
-
-        return item_list;
-    }
 
     /** Get single record by ID */
     async getByIdAsync(id: number): Promise<T | null> {
@@ -143,64 +95,4 @@ export class BaseDao<T extends PlainObject> {
         let result = await DbUtil.executeDeleteAsync(sql, [id]);
         return result;
     }
-
-    /**
-     * Get maximum sort order value plus one
-     * @returns Next available sort order
-     */
-    async getMaxSortOrderAsync(): Promise<number> {
-        let sql = format(
-            `SELECT max(sort_order) AS max_sorder FROM ??`,
-            [this.tableName]
-        );
-        let current_max_sort_order = await DbUtil.executeGetNumberAsync(sql) ?? 0;
-        return current_max_sort_order + 1;
-    }
-
-    /**
-     * Get paginated data
-     * For LEFT JOIN usage,
-     * refer to WarehouseDao implementation
-     * @param fields Array or string of column names to return
-     * @param where_str WHERE clause
-     * @param params Pagination parameters
-     * @param join_table_str JOIN clause
-     * @returns `{ list, total }`
-     */
-    protected async getPagerDataAsync(
-        fields: string[] | string,
-        where_str = "",
-        {
-            orderPara,
-            current = 1,
-            pageSize = 10,
-        }: Omit<PagerParams, "searchParams">,
-        join_table_str: string = ""
-    ) {
-        const fieldsStr = Array.isArray(fields)
-            ? escapeId(fields)
-            : fields;
-
-        let sql_list = `
-            SELECT ${fieldsStr}
-            FROM ${this.tableName}
-            ${join_table_str}
-            ${where_str}
-            ${SqlUtil.orderBy(orderPara || '')}
-            ${SqlUtil.limitPager(current, pageSize)}
-        `;
-
-        // TODO: Add JSON handling
-        // ${DbUtil.sql_order_by(conditions)}
-
-        const list = (await DbUtil.executeGetListAsync(sql_list)) as Array<T>;
-        // DbUtil.parse_json(list, "json_data");
-
-        // Get total count
-        let sql_total = ` SELECT count(*) AS total FROM ${this.tableName} ${where_str} `;
-        let total = await DbUtil.executeGetNumberAsync(sql_total) ?? 0;
-
-        return { list, total };
-    }
-
 }

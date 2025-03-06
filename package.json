@@ -2,16 +2,26 @@
   "name": "mysql-plain-dao",
   "version": "0.1.2-beta.20",
   "description": "A plain dao for mysql, no ORM, just plain sql",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js",
+      "types": "./dist/cjs/index.d.ts"
+    }
+  },
   "bin": {
-    "mysql-plain-dao": "./dist/generator/cli.js"
+    "mysql-plain-dao": "./dist/cjs/generator/cli.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "rimraf dist && pnpm build:cjs && pnpm build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
     "test": "NODE_ENV=test-local DEBUG=-DAO jest --runInBand",
     "test-in-docker": "NODE_ENV=test-in-docker DEBUG=-DAO jest --runInBand",
     "prepublishOnly": "pnpm build",
@@ -30,6 +40,7 @@
   "author": "hoist1999",
   "license": "MIT",
   "devDependencies": {
+    "@tsconfig/node18": "^18.2.4",
     "@types/debug": "^4.1.12",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.16",

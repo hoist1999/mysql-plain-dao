@@ -1,24 +1,20 @@
 {
-  "compilerOptions": {
-    "module": "CommonJS",
-    "declaration": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "target": "ES2022",
-    "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
-    "incremental": true,
-    "esModuleInterop": true,
-    "moduleResolution": "node"
-  },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/__tests__"
-  ]
+    "extends": "@tsconfig/node18/tsconfig.json",
+    "compilerOptions": {
+        "declaration": true,
+        "removeComments": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "sourceMap": true,
+        "baseUrl": "./",
+        "incremental": true
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "src/__tests__"
+    ]
 }

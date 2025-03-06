@@ -75,7 +75,17 @@ export class DbUtil {
                 ...this.defaultOptions,
                 ...this.options,
             }
+
             this.pool = mysql.createPool(currentOptions);
+
+            if (this.pool) {
+                const debugOptions = {
+                    ...currentOptions,
+                    password: currentOptions.password ? '****** (hidden)' : 'empty' // Hide password in logs
+                };
+                debug("Pool created with options:");
+                debug(debugOptions);
+            }
         }
         return this.pool;
     }
@@ -92,6 +102,7 @@ export class DbUtil {
         if (this.pool) {
             await this.pool.end();
             this.pool = null;
+            debug("Pool ended");
         }
     }
 

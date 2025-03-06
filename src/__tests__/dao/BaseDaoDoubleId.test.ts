@@ -1,9 +1,9 @@
-import { BaseDaoWithUUID } from "../../dao/BaseDaoWithUUID";
+import { BaseDaoDoubleId } from './../../dao/BaseDaoDoubleId';
 import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
 import { DbUtil } from '../../dao/DbUtil';
 import { InsertModel } from '../../dao/Types';
-import { User } from './User';
-import { UserDao } from './UserDao';
+import { User } from "../generated_dao/User";
+import { UserDao } from "../generated_dao/UserDao";
 
 // Test user table which has both uuid and id as primary key
 describe('UserDao', () => {
@@ -43,7 +43,7 @@ describe('UserDao', () => {
     describe('Create operations', () => {
         it('should insert a new user with UUID and timestamps', async () => {
             const beforeInsert = new Date();
-            const insertedUuid = await userDao.insertWithUuidAsync(testUser);
+            const insertedUuid = await userDao.insertAsync(testUser);
             const afterInsert = new Date();
 
             const insertedUser = await userDao.getByUuidAsync(insertedUuid);
@@ -63,8 +63,8 @@ describe('UserDao', () => {
             // Timestamp checks - round to seconds for MySQL DATETIME compatibility
             const beforeInsertSeconds = Math.floor(beforeInsert.getTime() / 1000) * 1000;
             const afterInsertSeconds = Math.ceil(afterInsert.getTime() / 1000) * 1000;
-            const createdAtTime = insertedUser!.created_at.getTime();
-            const updatedAtTime = insertedUser!.updated_at.getTime();
+            const createdAtTime = insertedUser!.created_at!.getTime();
+            const updatedAtTime = insertedUser!.updated_at!.getTime();
 
             expect(createdAtTime).toBeGreaterThanOrEqual(beforeInsertSeconds);
             expect(createdAtTime).toBeLessThanOrEqual(afterInsertSeconds);
@@ -77,7 +77,7 @@ describe('UserDao', () => {
         let insertedUuid: string;
 
         beforeEach(async () => {
-            insertedUuid = await userDao.insertWithUuidAsync(testUser);
+            insertedUuid = await userDao.insertAsync(testUser);
             const user = await userDao.getByUuidAsync(insertedUuid);
             insertedId = user!.id;
         });
@@ -111,10 +111,10 @@ describe('UserDao', () => {
         let originalUpdatedAt: Date;
 
         beforeEach(async () => {
-            const insertedUuid = await userDao.insertWithUuidAsync(testUser);
+            const insertedUuid = await userDao.insertAsync(testUser);
             insertedUser = (await userDao.getByUuidAsync(insertedUuid))!;
-            originalCreatedAt = insertedUser.created_at;
-            originalUpdatedAt = insertedUser.updated_at;
+            originalCreatedAt = insertedUser.created_at!;
+            originalUpdatedAt = insertedUser.updated_at!;
             // Wait 2 seconds to ensure updated_at will be different
             await new Promise(resolve => setTimeout(resolve, 2000));
         });
@@ -153,9 +153,9 @@ describe('UserDao', () => {
             // Timestamp checks
             const beforeUpdateSeconds = Math.floor(beforeUpdate.getTime() / 1000) * 1000;
             const afterUpdateSeconds = Math.ceil(afterUpdate.getTime() / 1000) * 1000;
-            const updatedAtTime = updatedUser!.updated_at.getTime();
+            const updatedAtTime = updatedUser!.updated_at!.getTime();
 
-            expect(updatedUser!.created_at.getTime()).toBe(originalCreatedAt.getTime());
+            expect(updatedUser!.created_at!.getTime()).toBe(originalCreatedAt.getTime());
             expect(updatedAtTime).not.toBe(originalUpdatedAt.getTime());
             expect(updatedAtTime).toBeGreaterThanOrEqual(beforeUpdateSeconds);
             expect(updatedAtTime).toBeLessThanOrEqual(afterUpdateSeconds);
@@ -170,7 +170,7 @@ describe('UserDao', () => {
                 updated_at: new Date()  // Manually set update time
             };
 
-            await userDao.updateByUuidAsync(updatedData);
+            await userDao.updateAsync(updatedData);
             const afterUpdate = new Date();
             const updatedUser = await userDao.getByUuidAsync(insertedUser.uuid);
 
@@ -182,9 +182,9 @@ describe('UserDao', () => {
             // Timestamp checks
             const beforeUpdateSeconds = Math.floor(beforeUpdate.getTime() / 1000) * 1000;
             const afterUpdateSeconds = Math.ceil(afterUpdate.getTime() / 1000) * 1000;
-            const updatedAtTime = updatedUser!.updated_at.getTime();
+            const updatedAtTime = updatedUser!.updated_at!.getTime();
 
-            expect(updatedUser!.created_at.getTime()).toBe(originalCreatedAt.getTime());
+            expect(updatedUser!.created_at!.getTime()).toBe(originalCreatedAt.getTime());
             expect(updatedAtTime).not.toBe(originalUpdatedAt.getTime());
             expect(updatedAtTime).toBeGreaterThanOrEqual(beforeUpdateSeconds);
             expect(updatedAtTime).toBeLessThanOrEqual(afterUpdateSeconds);
@@ -195,7 +195,7 @@ describe('UserDao', () => {
         let insertedUser: User;
 
         beforeEach(async () => {
-            const insertedUuid = await userDao.insertWithUuidAsync(testUser);
+            const insertedUuid = await userDao.insertAsync(testUser);
             insertedUser = (await userDao.getByUuidAsync(insertedUuid))!;
         });
 
@@ -221,7 +221,7 @@ describe('UserDao', () => {
                 username: `testuser${i}`,
                 email: `testuser${i}@example.com`
             }));
-            await userDao.bulkInsertWithUuidAsync(users);
+            await userDao.bulkInsertAsync(users);
 
             // get all users
             const allUsers = await userDao.getListAsync();
@@ -236,7 +236,7 @@ describe('UserDao', () => {
     // userdao with custom uuid field
     describe('UserDao with custom UUID field', () => {
         it('should bulk insert users with custom UUID field', async () => {
-            class CustomUserDao extends BaseDaoWithUUID<User> {
+            class CustomUserDao extends BaseDaoDoubleId<User> {
                 constructor() {
                     super({
                         table_name: 'user',
@@ -246,7 +246,7 @@ describe('UserDao', () => {
             }
 
             const tempUserDao = new CustomUserDao();
-            const insertedUuid = await tempUserDao.insertWithUuidAsync(testUser);
+            const insertedUuid = await tempUserDao.insertAsync(testUser);
             expect(insertedUuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
             const insertedUser = await tempUserDao.getByUuidAsync(insertedUuid);
             expect(insertedUser).toBeDefined();

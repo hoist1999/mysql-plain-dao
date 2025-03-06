@@ -1,9 +1,10 @@
 import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
 import { DbUtil } from '../../dao/DbUtil';
 import { InsertModel } from '../../dao/Types';
-import { BaseDaoWithUUID } from '../../dao/BaseDaoWithUUID';
-import { Book } from './Book';
-import { BookDao } from './BookDao';
+import { BaseDaoUuid } from '../../dao/BaseDaoUuid';
+import { Book } from "../generated_dao/Book";
+import { BookDao } from "../generated_dao/BookDao";
+
 
 // Test book table which has only uuid field as primary key
 describe('BookDao', () => {
@@ -35,7 +36,7 @@ describe('BookDao', () => {
     describe('Create operations', () => {
         it('should insert a new book with UUID and timestamps', async () => {
             const beforeInsert = new Date();
-            const insertedUserUUID = await bookDao.insertWithUuidAsync(testBook);
+            const insertedUserUUID = await bookDao.insertAsync(testBook);
             const afterInsert = new Date();
 
             const insertedBook = await bookDao.getByUuidAsync(insertedUserUUID);
@@ -67,7 +68,7 @@ describe('BookDao', () => {
         let insertedUuid: string;
 
         beforeEach(async () => {
-            insertedUuid = await bookDao.insertWithUuidAsync(testBook);
+            insertedUuid = await bookDao.insertAsync(testBook);
         });
 
         it('should get book by UUID', async () => {
@@ -88,7 +89,7 @@ describe('BookDao', () => {
         let originalUpdatedAt: Date;
 
         beforeEach(async () => {
-            const insertedUuid = await bookDao.insertWithUuidAsync(testBook);
+            const insertedUuid = await bookDao.insertAsync(testBook);
             insertedBook = (await bookDao.getByUuidAsync(insertedUuid))!;
             expect(insertedBook.created_at).toBeDefined();
             expect(insertedBook.updated_at).toBeDefined();
@@ -107,7 +108,7 @@ describe('BookDao', () => {
                 updated_at: new Date()
             };
 
-            await bookDao.updateByUuidAsync(updatedData);
+            await bookDao.updateAsync(updatedData);
             const afterUpdate = new Date();
             const updatedBook = await bookDao.getByUuidAsync(insertedBook.uuid);
 
@@ -135,7 +136,7 @@ describe('BookDao', () => {
                 updated_at: new Date()
             };
 
-            await bookDao.updateByUuidAsync(updatedData);
+            await bookDao.updateAsync(updatedData);
             const afterUpdate = new Date();
             const updatedBook = await bookDao.getByUuidAsync(insertedBook.uuid);
 
@@ -159,7 +160,7 @@ describe('BookDao', () => {
         let insertedBook: Book;
 
         beforeEach(async () => {
-            const insertedUserUUID = await bookDao.insertWithUuidAsync(testBook);
+            const insertedUserUUID = await bookDao.insertAsync(testBook);
             insertedBook = (await bookDao.getByUuidAsync(insertedUserUUID))!;
         });
 
@@ -178,7 +179,7 @@ describe('BookDao', () => {
                 title: `Test Book ${i}`,
                 author_id: i + 1
             }));
-            await bookDao.bulkInsertWithUuidAsync(books);
+            await bookDao.bulkInsertAsync(books);
 
             // Get all books
             const allBooks = await bookDao.getListAsync();
@@ -191,7 +192,7 @@ describe('BookDao', () => {
 
     describe('BookDao with custom UUID field', () => {
         it('should insert book with custom UUID field', async () => {
-            class CustomBookDao extends BaseDaoWithUUID<Book> {
+            class CustomBookDao extends BaseDaoUuid<Book> {
                 constructor() {
                     super({
                         table_name: 'book',
@@ -201,7 +202,7 @@ describe('BookDao', () => {
             }
 
             const tempBookDao = new CustomBookDao();
-            const insertBookUuid = await tempBookDao.insertWithUuidAsync(testBook);
+            const insertBookUuid = await tempBookDao.insertAsync(testBook);
 
             expect(insertBookUuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
             const insertedBook = await tempBookDao.getByUuidAsync(insertBookUuid!);
