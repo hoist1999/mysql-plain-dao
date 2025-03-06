@@ -1,6 +1,6 @@
 import { escape, escapeId, format } from "mysql2";
 import { v4 as uuidv4 } from 'uuid';
-import { type BaseDaoOption } from "./BaseDao";
+import type { BaseDaoOption } from "./BaseDao";
 import { CommonDao } from "./CommonDao";
 import { DbUtil } from "./DbUtil";
 import type { InsertModel, PlainObject } from "./Types";

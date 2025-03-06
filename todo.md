@@ -1,3 +1,5 @@
+cli env
+
 getItem, json
 multi thread get pool problem? and end pool
 

@@ -1,10 +1,12 @@
 import { format } from "mysql2";
-import { BaseDaoUuid, BaseDaoUuidOption } from "./BaseDaoUuid";
+import type { BaseDaoUuidOption } from "./BaseDaoUuid";
+import { BaseDaoUuid } from "./BaseDaoUuid";
 import { DbUtil } from "./DbUtil";
 import type { PlainObject } from "./Types";
 
 export interface BaseDaoDoubleIdOption extends BaseDaoUuidOption {
 }
+
 
 /** DAO class for tables with both UUID and auto-increment ID */
 export class BaseDaoDoubleId<T extends PlainObject> extends BaseDaoUuid<T> {
