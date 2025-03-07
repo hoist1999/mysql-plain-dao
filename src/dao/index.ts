@@ -1,6 +1,5 @@
 // Export all types
 export * from './Types'
-export * from './TypeGuard'
 
 // Base DAO classes
 export * from './BaseDao'
