@@ -1,4 +1,4 @@
-import { escapeId, escape, format } from "mysql2";
+import { escapeId, format } from "mysql2";
 import { DbUtil } from "./DbUtil";
 import { SqlUtil } from "./SqlUtil";
 import type { PagerParams, ParasType, PlainObject } from "./Types";

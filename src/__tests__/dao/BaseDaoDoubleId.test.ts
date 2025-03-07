@@ -1,9 +1,9 @@
-import { BaseDaoDoubleId } from './../../dao/BaseDaoDoubleId';
 import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
 import { DbUtil } from '../../dao/DbUtil';
 import { InsertModel } from '../../dao/Types';
 import { User } from "../generated_dao/User";
 import { UserDao } from "../generated_dao/UserDao";
+import { BaseDaoDoubleID } from './../../dao/BaseDaoDoubleID';
 
 // Test user table which has both uuid and id as primary key
 describe('UserDao', () => {
@@ -236,7 +236,7 @@ describe('UserDao', () => {
     // userdao with custom uuid field
     describe('UserDao with custom UUID field', () => {
         it('should bulk insert users with custom UUID field', async () => {
-            class CustomUserDao extends BaseDaoDoubleId<User> {
+            class CustomUserDao extends BaseDaoDoubleID<User> {
                 constructor() {
                     super({
                         table_name: 'user',

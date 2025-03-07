@@ -1,7 +1,7 @@
 import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
 import { DbUtil } from '../../dao/DbUtil';
 import { InsertModel } from '../../dao/Types';
-import { BaseDaoUuid } from '../../dao/BaseDaoUuid';
+import { BaseDaoUUID } from '../../dao/BaseDaoUUID';
 import { Book } from "../generated_dao/Book";
 import { BookDao } from "../generated_dao/BookDao";
 
@@ -192,7 +192,7 @@ describe('BookDao', () => {
 
     describe('BookDao with custom UUID field', () => {
         it('should insert book with custom UUID field', async () => {
-            class CustomBookDao extends BaseDaoUuid<Book> {
+            class CustomBookDao extends BaseDaoUUID<Book> {
                 constructor() {
                     super({
                         table_name: 'book',

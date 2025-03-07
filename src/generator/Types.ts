@@ -1,7 +1,10 @@
 export interface ColumnDefinition {
     udtName: string,
     nullable: boolean,
-    tsType?: string
+    tsType?: string,
+    isPrimaryKey: boolean,
+    isUnique: boolean,
+    characterMaximumLength?: number
 }
 
 export interface TableDefinition {

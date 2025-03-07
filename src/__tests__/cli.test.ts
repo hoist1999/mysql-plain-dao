@@ -109,7 +109,7 @@ describe('CLI Generator Tests', () => {
 
         // Check dao file content
         const daoContent = fs.readFileSync(daoFileUser, 'utf-8');
-        expect(daoContent).toContain('export class UserDao extends BaseDao<User>');
+        expect(daoContent).toContain('export class UserDao extends BaseDaoDoubleID<User>');
         expect(daoContent).toContain("table_name: 'user'");
     });
 
@@ -134,7 +134,7 @@ describe('CLI Generator Tests', () => {
         // Check dao file content of user
         expect(fs.existsSync(daoFileUser)).toBe(true);
         const daoContent = fs.readFileSync(daoFileUser, 'utf-8');
-        expect(daoContent).toContain('export class UserDao extends BaseDao<User>');
+        expect(daoContent).toContain('export class UserDao extends BaseDaoDoubleID<User>');
         expect(daoContent).toContain("table_name: 'user'");
 
         expect(fs.existsSync(modelFileNews)).toBe(true);
@@ -169,7 +169,7 @@ describe('CLI Generator Tests', () => {
         // Check dao file content of user
         expect(fs.existsSync(daoFileUser)).toBe(true);
         const daoContent = fs.readFileSync(daoFileUser, 'utf-8');
-        expect(daoContent).toContain('export class UserDao extends BaseDao<User>');
+        expect(daoContent).toContain('export class UserDao extends BaseDaoDoubleID<User>');
         expect(daoContent).toContain("table_name: 'user'");
 
         expect(fs.existsSync(modelFileNews)).toBe(true);
@@ -204,6 +204,6 @@ async function testGenerate(options: CliOptions) {
 
     // Check dao file content
     const daoContent = fs.readFileSync(daoFileUser, 'utf-8');
-    expect(daoContent).toContain('export class UserDao extends BaseDao<User>');
+    expect(daoContent).toContain('export class UserDao extends BaseDaoDoubleID<User>');
     expect(daoContent).toContain("table_name: 'user'");
 }

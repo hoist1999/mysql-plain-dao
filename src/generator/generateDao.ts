@@ -4,38 +4,66 @@ import { toCamelCase } from './common'
 import { formatTypeScript } from './generateModel'
 import type { CliOptions, Database } from './Types'
 
-export async function generateAndWriteDaos(
+/** Determine which base DAO class to use based on table structure */
+async function determineBaseClass(
     db: Database,
-    tables: string[],
     schema: string,
-    options: CliOptions,
-): Promise<void> {
-    if (options.generateType === 'dao' || options.generateType === 'all') {
-        for (const table of tables) {
-            const modelName = toCamelCase(table)
-            const fileName = `${modelName}Dao.ts`
+    table: string
+): Promise<{
+    baseClass: 'BaseDao' | 'BaseDaoWithUUID' | 'BaseDaoDoubleID';
+    idField?: string;
+    uuidField?: string;
+}> {
+    const tableDefinition = await db.getTableDefinition(table, schema);
 
-            // Use daoDir if specified, otherwise use outputDir
-            const outputDir = options.daoDir || options.outputDir
-            if (!outputDir) {
-                throw new Error('No output directory specified for DAO generation')
-            }
-            const outputPath = `${outputDir}/${fileName}`
+    let hasIntegerId = false;
+    let hasUuidField = false;
+    let idFieldName = 'id';
+    let uuidFieldName = 'uuid';
 
-            // Check if file already exists
-            if (fs.existsSync(outputPath)) {
-                console.log(`⏭️  Skipping ${fileName} - file already exists`)
-                continue
-            }
+    // 检查整数类型的主键
+    const integerIdColumn = Object.entries(tableDefinition).find(([name, def]) =>
+        name.toLowerCase() === 'id' &&
+        def.isPrimaryKey &&
+        ['int', 'bigint', 'integer'].includes(def.udtName.toLowerCase())
+    );
 
-            const daoContent = await generateDao(db, table, schema, options)
-            const formattedOutput = await formatTypeScript(daoContent)
+    if (integerIdColumn) {
+        hasIntegerId = true;
+        idFieldName = integerIdColumn[0]; // 使用列名
+    }
 
-            // Ensure output directory exists
-            fs.mkdirSync(outputDir, { recursive: true })
-            fs.writeFileSync(outputPath, formattedOutput)
-            console.log(`✅ Generated ${fileName}`)
-        }
+    // 检查 UUID 字段
+    const uuidColumn = Object.entries(tableDefinition).find(([name, def]) => {
+        const isStringType = ['char', 'varchar'].includes(def.udtName.toLowerCase());
+
+        return name.toLowerCase() === 'uuid' &&
+            isStringType &&
+            def.isUnique;
+    });
+
+    if (uuidColumn) {
+        hasUuidField = true;
+        uuidFieldName = uuidColumn[0]; // 使用列名
+    }
+
+    // 确定基类
+    if (hasIntegerId && hasUuidField) {
+        return {
+            baseClass: 'BaseDaoDoubleID',
+            idField: idFieldName,
+            uuidField: uuidFieldName
+        };
+    } else if (hasUuidField) {
+        return {
+            baseClass: 'BaseDaoWithUUID',
+            uuidField: uuidFieldName
+        };
+    } else {
+        return {
+            baseClass: 'BaseDao',
+            idField: idFieldName
+        };
     }
 }
 
@@ -47,10 +75,8 @@ async function generateDao(
 ): Promise<string> {
     let output = '/* tslint:disable */\n\n'
 
-    // Get primary key info
-    const primaryKey = await db.getPrimaryKey(schema, table)
-    const isUUID = primaryKey?.dataType?.toLowerCase().includes('uuid')
-    const baseClass = isUUID ? 'BaseDaoWithUUID' : 'BaseDao'
+    // Determine which base class to use
+    const { baseClass, idField, uuidField } = await determineBaseClass(db, schema, table)
 
     // Add imports
     output += `import { ${baseClass} } from 'mysql-plain-dao';\n`
@@ -85,6 +111,15 @@ async function generateDao(
     output += `    constructor() {\n`
     output += `        super({\n`
     output += `            table_name: '${table}',\n`
+
+    // Add id_field and uuid_field if needed
+    if (idField && idField !== 'id') {
+        output += `            id_field: '${idField}',\n`
+    }
+    if (uuidField && uuidField !== 'uuid') {
+        output += `            uuid_field: '${uuidField}',\n`
+    }
+
     output += `        });\n`
     output += `    }\n`
     output += `    \n`
@@ -92,4 +127,39 @@ async function generateDao(
     output += `}\n`
 
     return output
+}
+
+export async function generateAndWriteDaos(
+    db: Database,
+    tables: string[],
+    schema: string,
+    options: CliOptions,
+): Promise<void> {
+    if (options.generateType === 'dao' || options.generateType === 'all') {
+        for (const table of tables) {
+            const modelName = toCamelCase(table)
+            const fileName = `${modelName}Dao.ts`
+
+            // Use daoDir if specified, otherwise use outputDir
+            const outputDir = options.daoDir || options.outputDir
+            if (!outputDir) {
+                throw new Error('No output directory specified for DAO generation')
+            }
+            const outputPath = `${outputDir}/${fileName}`
+
+            // Check if file already exists
+            if (fs.existsSync(outputPath)) {
+                console.log(`⏭️  Skipping ${fileName} - file already exists`)
+                continue
+            }
+
+            const daoContent = await generateDao(db, table, schema, options)
+            const formattedOutput = await formatTypeScript(daoContent)
+
+            // Ensure output directory exists
+            fs.mkdirSync(outputDir, { recursive: true })
+            fs.writeFileSync(outputPath, formattedOutput)
+            console.log(`✅ Generated ${fileName}`)
+        }
+    }
 }

@@ -1,6 +1,6 @@
+import { BaseDaoDoubleID } from '../../dao/BaseDaoDoubleID';
 /* tslint:disable */
 
-import { BaseDaoDoubleID } from '../../dao/BaseDaoDoubleID';
 import type { User } from './User';
 
 export class UserDao extends BaseDaoDoubleID<User> {

@@ -125,24 +125,56 @@ export class MysqlDatabase implements Database {
         return enums
     }
 
-    public async getTableDefinition(tableName: string, tableSchema: string) {
-        let tableDefinition: TableDefinition = {}
-
+    public async getTableDefinition(tableName: string, tableSchema: string): Promise<TableDefinition> {
         const tableColumns = await this.queryAsync(
-            'SELECT column_name, data_type, is_nullable ' +
-            'FROM information_schema.columns ' +
-            'WHERE table_name = ? and table_schema = ?',
+            `SELECT 
+                c.column_name,
+                c.data_type,
+                c.is_nullable,
+                c.column_key,
+                c.character_maximum_length,
+                CASE 
+                    WHEN tc.constraint_type = 'UNIQUE' OR c.column_key = 'UNI' THEN 1 
+                    ELSE 0 
+                END as is_unique
+            FROM information_schema.columns c
+            LEFT JOIN information_schema.key_column_usage kcu
+                ON c.table_schema = kcu.table_schema
+                AND c.table_name = kcu.table_name
+                AND c.column_name = kcu.column_name
+            LEFT JOIN information_schema.table_constraints tc
+                ON kcu.constraint_name = tc.constraint_name
+                AND kcu.table_schema = tc.table_schema
+                AND kcu.table_name = tc.table_name
+            WHERE c.table_name = ? and c.table_schema = ?`,
             [tableName, tableSchema]
-        )
-        tableColumns.map((schemaItem: { column_name: string, data_type: string, is_nullable: string }) => {
-            const columnName = schemaItem.column_name
-            const dataType = schemaItem.data_type
+        );
+
+        let tableDefinition: TableDefinition = {};
+
+        tableColumns.forEach((schemaItem: {
+            column_name: string;
+            data_type: string;
+            is_nullable: string;
+            column_key: string;
+            character_maximum_length: number;
+            is_unique: number;
+        }) => {
+            const columnName = schemaItem.column_name;
+            const dataType = schemaItem.data_type;
+
             tableDefinition[columnName] = {
-                udtName: /^(enum|set)$/i.test(dataType) ? MysqlDatabase.getEnumNameFromColumn(dataType, columnName) : dataType,
-                nullable: schemaItem.is_nullable === 'YES'
-            }
-        })
-        return tableDefinition
+                udtName: /^(enum|set)$/i.test(dataType)
+                    ? MysqlDatabase.getEnumNameFromColumn(dataType, columnName)
+                    : dataType,
+                nullable: schemaItem.is_nullable === 'YES',
+                isPrimaryKey: schemaItem.column_key === 'PRI',
+                isUnique: schemaItem.is_unique === 1,
+                characterMaximumLength: schemaItem.character_maximum_length
+            };
+        });
+
+        return tableDefinition;
     }
 
     public async getTableTypes(tableName: string, tableSchema: string, options: CliOptions) {

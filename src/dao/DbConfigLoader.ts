@@ -3,17 +3,6 @@ import debug_func from 'debug';
 import mysql from 'mysql2';
 const debug = debug_func('DAO');
 
-// export interface DBConfig {
-//     host: string;
-//     user: string;
-//     password: string;
-//     database: string;
-//     port: number;
-//     connectionLimit?: number;
-//     queueLimit?: number;
-//     waitForConnections?: boolean;
-// }
-
 const REQUIRED_ENV_VARS = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_DATABASE'] as const;
 
 /**
