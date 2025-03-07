@@ -123,14 +123,6 @@ async function main() {
         // Delete
         await userDao.deleteByIdAsync(userId);
         console.log('User deleted successfully');
-
-        // Custom query example
-        const result = await DbUtil.queryAsync(
-            'SELECT * FROM user WHERE created_at > ? AND is_active = ?',
-            [new Date('2024-01-01'), true]
-        );
-        console.log('Custom query result:', result);
-
     } catch (error) {
         console.error('Error occurred:', error);
         process.exit(1);
@@ -147,13 +139,15 @@ main().catch(console.error);
 
 ## CLI Options
 
-- \`-c, --conn\`: Database connection string (MySQL)
-- \`-t, --table\`: Table name(s) to generate interfaces for
-- \`-o, --output\`: Output directory for generated files
-- \`-g, --generate\`: Generation type (model, dao, or all)
-- \`--model-dir\`: Specific output directory for model files
-- \`--dao-dir\`: Specific output directory for DAO files
-- \`--no-header\`: Skip writing file header comment
+| Option | Description |
+|--------|-------------|
+| `-c, --conn` | Database connection string (MySQL) |
+| `-t, --table` | Table name(s) to generate interfaces for |
+| `-o, --output` | Output directory for generated files |
+| `-g, --generate` | Generation type (model, dao, or all) |
+| `--model-dir` | Specific output directory for model files |
+| `--dao-dir` | Specific output directory for DAO files |
+| `--no-header` | Skip writing file header comment |
 
 ## Base DAO Classes
 
