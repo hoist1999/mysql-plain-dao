@@ -1,5 +1,5 @@
 import debug_func from "debug";
-import { isNumber, isString } from "lodash";
+import _ from "lodash";
 import mysql from "mysql2/promise";
 import type { ParasType } from "./Types";
 
@@ -470,7 +470,7 @@ export class DbUtil {
         const val = rows[0][field_name];
 
         if (val === null || val === undefined) return null;
-        if (isString(val)) return val;
+        if (_.isString(val)) return val;
 
         throw new DatabaseError(
             'Return value is not of type string',
@@ -522,7 +522,7 @@ export class DbUtil {
         const val = rows[0][field_name];
 
         if (val === null || val === undefined) return null;
-        if (isNumber(val)) return val;
+        if (_.isNumber(val)) return val;
 
         throw new DatabaseError(
             'Return value is not of type number',

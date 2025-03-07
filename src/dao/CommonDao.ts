@@ -1,7 +1,7 @@
-import { escapeId, format } from "mysql2";
+import { escapeId, escape, format } from "mysql2";
 import { DbUtil } from "./DbUtil";
 import { SqlUtil } from "./SqlUtil";
-import type { ParasType, PlainObject, SortCondition } from "./Types";
+import type { PagerParams, ParasType, PlainObject } from "./Types";
 
 export interface CommonDaoOption {
     table_name: string;
@@ -9,19 +9,8 @@ export interface CommonDaoOption {
     id_field?: string;
 }
 
-export interface PagerParams {
-    /** Current page number */
-    current?: number | string;
-    /** Page size */
-    pageSize?: number | string;
-    /** Sort order */
-    orderPara?: SortCondition | string;
-    /** Search parameters from form */
-    searchParams?: Record<string, string>;
-}
-
-/** Base class for all DAO layers, provides basic CRUD capabilities upon inheritance
- * @author hoist1999
+/** 
+ * CommonDao is a base class for all DAO layers, provides basic capabilities upon inheritance
  */
 export class CommonDao<T extends PlainObject> {
     protected table_name: string;
@@ -32,11 +21,6 @@ export class CommonDao<T extends PlainObject> {
         this.table_name = option.table_name;
         this.json_columns = option.json_columns !== undefined ? option.json_columns : [];
         this.id_field = option.id_field !== undefined ? option.id_field : 'id';
-    }
-
-    /** Get current table name */
-    getTableName() {
-        return this.table_name;
     }
 
     /** Get data collection */
@@ -55,94 +39,19 @@ export class CommonDao<T extends PlainObject> {
         return await DbUtil.executeGetSingleAsync<T>(sql, paras);
     }
 
-    // /** Insert data */
-    // async insertAsync(item: InsertModel<T>): Promise<number | null> {
-    //     const sql = format(
-    //         `INSERT INTO ${this.tableName} SET ?`,
-    //         item
-    //     );
-    //     const insertId = await DbUtil.executeInsertAsync(sql);
-    //     return insertId;
-    // }
-
-    // /** Bulk insert data: More efficient than inserting one by one.
-    //  * Execute a single SQL statement for all insertions.
-    //  * ~1.374s for 100k records */
-    // async bulkInsertAsync(item_list: Array<T | InsertModel<T>>) {
-    //     if (!item_list || item_list.length == 0) {
-    //         return;
-    //     }
-
-    //     const keys = Object.keys(item_list[0]);
-
-    //     // Double map to convert object array to SQL values
-    //     const values_str = item_list
-    //         .map(
-    //             (item) =>
-    //                 `(${Object.values(item)
-    //                     .map((val) => escape(val))
-    //                     .join(",")})`
-    //         )
-    //         .join(",");
-
-    //     let sql = ` INSERT INTO ${this.tableName}(${escapeId(
-    //         keys
-    //     )}) VALUES ${values_str}`;
-
-    //     await DbUtil.queryAsync(sql);
-
-    //     // Keep this comment for reference:
-    //     // Note: Object.keys order is crucial for correct insertion
-    //     // Tested that it matches the order used in sqlstring
-    //     // Test code for key order:
-    //     // var obj = {
-    //     //     a : 1,
-    //     //     b : 2,
-    //     //     d : 3,
-    //     //     c : 4,
-    //     // }
-    //     // debug(Object.keys(obj));
-    //     // for (var key in obj) {
-    //     //     debug({key});
-    //     // }
-    // }
 
     /** Get all data records */
     async getListAsync(): Promise<Array<T>> {
-        const sql = `SELECT * FROM ${this.table_name} `;
+        let sql = format(
+            `SELECT * FROM ??`,
+            [this.table_name]
+        );
+
         const item_list = await DbUtil.executeGetListAsync<T>(sql);
         DbUtil.parseJson(item_list, "json_data");
 
         return item_list;
     }
-
-    // /** Get single record by ID */
-    // async getByIdAsync(id: number): Promise<T | null> {
-    //     const sql = `SELECT * FROM ${this.tableName} WHERE ${this.idField} = ?`;
-    //     const item = await DbUtil.executeGetSingleAsync<T>(sql, [id]);
-    //     if (item) {
-    //         DbUtil.parseJson(item, "json_data");
-    //     }
-    //     return item;
-    // }
-
-    // /** Update record with provided object */
-    // async updateAsync(item: T): Promise<number | null> {
-    //     const { [this.idField]: id, ...update_item } = item;
-    //     const sql = format(
-    //         `UPDATE ${this.tableName} SET ? WHERE ${this.idField} = ?`,
-    //         [update_item, id]
-    //     );
-
-    //     return await DbUtil.executeUpdateAsync(sql);
-    // }
-
-    // /** Delete record by ID */
-    // async deleteByIdAsync(id: number): Promise<number | null> {
-    //     const sql = `DELETE FROM ${this.tableName} WHERE ${this.idField} = ?`;
-    //     let result = await DbUtil.executeDeleteAsync(sql, [id]);
-    //     return result;
-    // }
 
     /**
      * Get maximum sort order value plus one

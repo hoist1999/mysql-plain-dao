@@ -40,6 +40,17 @@ export interface SortCondition {
     field?: string;
 }
 
+export interface PagerParams {
+    /** Current page number */
+    current?: number;
+    /** Page size */
+    pageSize?: number;
+    /** Sort order */
+    orderPara?: SortCondition | string;
+    /** Search parameters from form */
+    searchParams?: Record<string, string>;
+}
+
 
 //用户账户状态
 export enum UserStatus {
