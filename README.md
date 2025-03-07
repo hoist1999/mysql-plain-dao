@@ -51,9 +51,9 @@ export type InsertUser = Omit<User, 'id'>;
 ```typescript
 // src/dao/UserDao.ts
 import type { User, InsertUser } from './User';
-import { BaseDaoDoubleID } from 'mysql-plain-dao';
+import { BaseDao } from 'mysql-plain-dao';
 
-export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
+export class UserDao extends BaseDao<User, InsertUser> {
     constructor() {
         super({
             table_name: 'user'
