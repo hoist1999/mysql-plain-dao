@@ -26,13 +26,13 @@ pnpm add mysql-plain-dao
 Generate TypeScript interfaces and DAOs from your existing MySQL database tables:
 
 ```bash
-npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o src/generated/
+npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o src/dao/
 ```
 
 Generated files example:
 
 ```typescript
-// src/generated/User.ts
+// src/dao/User.ts
 export interface User {
     id: number;
     username: string;
@@ -49,7 +49,7 @@ export type InsertUser = Omit<User, 'id'>;
 ```
 
 ```typescript
-// src/generated/UserDao.ts
+// src/dao/UserDao.ts
 import type { User, InsertUser } from './User';
 import { BaseDaoDoubleID } from 'mysql-plain-dao';
 
@@ -67,10 +67,10 @@ export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
 Here's how to use the generated DAO class for CRUD operations:
 
 ```typescript
-// src/examples/user-crud-example.ts
+// src/user-crud-example.ts
 import { DbUtil } from 'mysql-plain-dao';
-import { UserDao } from './generated/UserDao';
-import type { InsertUser } from './generated/User';
+import { UserDao } from './dao/UserDao';
+import type { InsertUser } from './dao/User';
 
 // Database configuration
 const DB_CONFIG = {
