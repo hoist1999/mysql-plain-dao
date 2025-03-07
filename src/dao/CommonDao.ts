@@ -6,7 +6,6 @@ import type { PagerParams, ParasType, PlainObject } from "./Types";
 export interface CommonDaoOption {
     table_name: string;
     json_columns?: string[];
-    id_field?: string;
 }
 
 /** 
@@ -15,12 +14,11 @@ export interface CommonDaoOption {
 export class CommonDao<T extends PlainObject> {
     protected table_name: string;
     protected json_columns: string[];
-    protected id_field: string;
+
 
     constructor(option: CommonDaoOption) {
         this.table_name = option.table_name;
         this.json_columns = option.json_columns !== undefined ? option.json_columns : [];
-        this.id_field = option.id_field !== undefined ? option.id_field : 'id';
     }
 
     /** Get data collection */

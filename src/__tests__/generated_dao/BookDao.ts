@@ -1,9 +1,9 @@
 /* tslint:disable */
 
-import type { Book } from './Book';
+import type { Book, InsertBook } from './Book';
 import { BaseDaoUUID } from '../../dao/BaseDaoUUID';
 
-export class BookDao extends BaseDaoUUID<Book> {
+export class BookDao extends BaseDaoUUID<Book, InsertBook> {
     constructor() {
         super({
             table_name: 'book',

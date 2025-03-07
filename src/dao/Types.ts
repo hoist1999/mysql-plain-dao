@@ -52,5 +52,5 @@ export interface PagerParams {
 }
 
 
-/** Used when inserting new data into database: ignores id and uuid values */
-export type InsertModel<T> = Omit<T, "id" | "uuid">;
+// /** Used when inserting new data into database: ignores id and uuid values */
+// export type InsertModel<T> = Omit<T, "id" | "uuid">;

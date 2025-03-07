@@ -1,9 +1,9 @@
 /* tslint:disable */
 
 import { BaseDaoDoubleID } from '../../dao/BaseDaoDoubleID';
-import type { User } from './User';
+import type { InsertUser, User } from './User';
 
-export class UserDao extends BaseDaoDoubleID<User> {
+export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
     constructor() {
         super({
             table_name: 'user',

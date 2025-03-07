@@ -15,3 +15,5 @@ export interface Book {
     created_at?: Date | null;
     updated_at?: Date | null;
 }
+
+export type InsertBook = Omit<Book, 'uuid'>;

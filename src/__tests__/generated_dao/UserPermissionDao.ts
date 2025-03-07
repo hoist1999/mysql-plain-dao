@@ -1,9 +1,9 @@
 /* tslint:disable */
 
 import { BaseDao } from '../../dao/BaseDao';
-import type { UserPermission } from './UserPermission';
+import type { UserPermission, InsertUserPermission } from './UserPermission';
 
-export class UserPermissionDao extends BaseDao<UserPermission> {
+export class UserPermissionDao extends BaseDao<UserPermission, InsertUserPermission> {
     constructor() {
         super({
             table_name: 'user_permission',

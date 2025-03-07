@@ -1,22 +1,23 @@
 import { escape, escapeId, format } from "mysql2";
-import { CommonDao } from "./CommonDao";
+import { CommonDao, CommonDaoOption } from "./CommonDao";
 import { DbUtil } from "./DbUtil";
-import type { InsertModel, PlainObject } from "./Types";
+import type { PlainObject } from "./Types";
 
-export interface BaseDaoOption {
-    table_name: string;
-    json_columns?: string[];
+export interface BaseDaoOption extends CommonDaoOption {
     id_field?: string;
 }
 
 /** Base DAO class for tables with auto-increment ID */
-export class BaseDao<T extends PlainObject> extends CommonDao<T> {
+export class BaseDao<T extends PlainObject, InsertModelType extends PlainObject> extends CommonDao<T> {
+    protected id_field: string;
+
     constructor(option: BaseDaoOption) {
         super(option);
+        this.id_field = option.id_field !== undefined ? option.id_field : 'id';
     }
 
     /** Insert data */
-    async insertAsync(item: InsertModel<T>): Promise<number | null> {
+    async insertAsync(item: InsertModelType): Promise<number | null> {
         const sql = format(
             `INSERT INTO ${this.table_name} SET ?`,
             item
@@ -28,7 +29,7 @@ export class BaseDao<T extends PlainObject> extends CommonDao<T> {
     /** Bulk insert data: More efficient than inserting one by one.
      * Execute a single SQL statement for all insertions.
      * ~1.374s for 100k records */
-    async bulkInsertAsync(item_list: Array<T | InsertModel<T>>) {
+    async bulkInsertAsync(item_list: Array<InsertModelType>) {
         if (!item_list || item_list.length == 0) {
             return;
         }

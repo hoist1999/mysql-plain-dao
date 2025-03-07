@@ -1,15 +1,14 @@
+import { BaseDaoUUID } from '../../dao/BaseDaoUUID';
 import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
 import { DbUtil } from '../../dao/DbUtil';
-import { InsertModel } from '../../dao/Types';
-import { BaseDaoUUID } from '../../dao/BaseDaoUUID';
-import { Book } from "../generated_dao/Book";
+import { Book, InsertBook } from "../generated_dao/Book";
 import { BookDao } from "../generated_dao/BookDao";
 
 
 // Test book table which has only uuid field as primary key
 describe('BookDao', () => {
     let bookDao: BookDao;
-    let testBook: InsertModel<Book>;
+    let testBook: InsertBook;
 
     beforeAll(async () => {
         await DbUtil.initialize(getDbConfigFromEnv());
@@ -192,7 +191,7 @@ describe('BookDao', () => {
 
     describe('BookDao with custom UUID field', () => {
         it('should insert book with custom UUID field', async () => {
-            class CustomBookDao extends BaseDaoUUID<Book> {
+            class CustomBookDao extends BaseDaoUUID<Book, InsertBook> {
                 constructor() {
                     super({
                         table_name: 'book',

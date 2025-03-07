@@ -4,12 +4,16 @@ import { DbUtil } from "./DbUtil";
 import type { PlainObject } from "./Types";
 
 export interface BaseDaoDoubleIDOption extends BaseDaoUUIDOption {
+	id_field?: string;
 }
 
 /** DAO class for tables with both UUID and auto-increment ID */
-export class BaseDaoDoubleID<T extends PlainObject> extends BaseDaoUUID<T> {
+export class BaseDaoDoubleID<T extends PlainObject, InsertModelType extends PlainObject> extends BaseDaoUUID<T, InsertModelType> {
+	protected id_field: string;
+
 	constructor(option: BaseDaoDoubleIDOption) {
 		super(option);
+		this.id_field = option.id_field !== undefined ? option.id_field : 'id';
 	}
 
 	/** Get single record by ID */

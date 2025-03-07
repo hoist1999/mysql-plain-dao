@@ -91,25 +91,25 @@ Environment variables provide a secure and flexible way to configure the tool, e
 - Docker containers and cloud environments
 - Development workflows where you switch between different configurations
 
-All options can be set using environment variables with the `SCHEMATS_` prefix:
+All options can be set using environment variables with the `DAO_` prefix:
 
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
-| SCHEMATS_CONN | Database connection string | - |
-| SCHEMATS_TABLE | Table name(s) to generate interfaces for | - |
-| SCHEMATS_OUTPUT | Output directory for generated files | - |
-| SCHEMATS_GENERATE | Generation type (model, dao, or all) | all |
-| SCHEMATS_MODEL_DIR | Output directory for model files | Same as OUTPUT |
-| SCHEMATS_DAO_DIR | Output directory for DAO files | Same as OUTPUT |
-| SCHEMATS_NO_HEADER | Skip writing file header comment | false |
+| DAO_CONN | Database connection string | - |
+| DAO_TABLE | Table name(s) to generate interfaces for | - |
+| DAO_OUTPUT | Output directory for generated files | - |
+| DAO_GENERATE | Generation type (model, dao, or all) | all |
+| DAO_MODEL_DIR | Output directory for model files | Same as OUTPUT |
+| DAO_DAO_DIR | Output directory for DAO files | Same as OUTPUT |
+| DAO_NO_HEADER | Skip writing file header comment | false |
 
 ### Example
 
 ```bash
-SCHEMATS_CONN=mysql://user:pass@localhost:3306/dbname \
-SCHEMATS_TABLE=users,products \
-SCHEMATS_OUTPUT=src/models/ \
-SCHEMATS_GENERATE=all \
+DAO_CONN=mysql://user:pass@localhost:3306/dbname \
+DAO_TABLE=users,products \
+DAO_OUTPUT=src/models/ \
+DAO_GENERATE=all \
 npx mysql-plain-dao
 ```
 

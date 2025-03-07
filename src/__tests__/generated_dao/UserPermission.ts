@@ -21,3 +21,5 @@ export interface UserPermission {
     created_at?: Date | null;
     updated_at?: Date | null;
 }
+
+export type InsertUserPermission = Omit<UserPermission, 'id'>;

@@ -23,3 +23,5 @@ export interface User {
     created_at?: Date | null;
     updated_at?: Date | null;
 }
+
+export type InsertUser = Omit<User, 'id' | 'uuid'>;

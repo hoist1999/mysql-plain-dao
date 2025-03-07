@@ -11,7 +11,7 @@
  *           npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/users.ts
  */
 
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import type { CliOptions, GenerateType } from './Types';
 import { executeGenerateAsync } from './generate';
 
@@ -21,42 +21,54 @@ const program = new Command();
     program
         .name('mysql-plain-dao')
         .description('Generate TypeScript models and DAO from MySQL database tables')
-        .version('1.0.0'); // You might want to import this from package.json
+        .version('1.0.0');
 
     program
-        .requiredOption(
-            '-c, --conn <connection>',
-            'Database connection string (MySQL)'
+        .addOption(
+            new Option('-c, --conn <connection>', 'Database connection string (MySQL)')
+                .env('DAO_CONN')
+                .makeOptionMandatory()
         )
-        .option(
-            '-t, --table <tables...>',
-            'table name(s) to generate interfaces for'
+        .addOption(
+            new Option('-t, --table <tables...>', 'table name(s) to generate interfaces for')
+                .env('DAO_TABLE')
         )
-        .requiredOption(
-            '-o, --output <dir>',
-            'output directory for generated files'
+        .addOption(
+            new Option('-o, --output <dir>', 'output directory for generated files')
+                .env('DAO_OUTPUT')
+                .makeOptionMandatory()
         )
-        .option(
-            '-g, --generate <type>',
-            'generation type (model, dao, or all)',
-            'all'
+        .addOption(
+            new Option('-g, --generate <type>', 'generation type (model, dao, or all)')
+                .env('DAO_GENERATE')
+                .default('all')
+                .choices(['model', 'dao', 'all'])
         )
-        .option(
-            '--no-header',
-            'skip writing file header comment'
+        .addOption(
+            new Option('--no-header', 'skip writing file header comment')
+                .env('DAO_NO_HEADER')
         )
-        .option(
-            '--model-dir <dir>',
-            'output directory for model files (overrides -o for models)'
+        .addOption(
+            new Option('--model-dir <dir>', 'output directory for model files (overrides -o for models)')
+                .env('DAO_MODEL_DIR')
         )
-        .option(
-            '--dao-dir <dir>',
-            'output directory for DAO files (overrides -o for DAOs)'
+        .addOption(
+            new Option('--dao-dir <dir>', 'output directory for DAO files (overrides -o for DAOs)')
+                .env('DAO_DAO_DIR')
         );
 
     program.addHelpText('after', `
 Example:
   $ mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o ./src/dao/
+
+Environment Variables:
+  DAO_CONN        Database connection string
+  DAO_TABLE       Comma-separated table names
+  DAO_OUTPUT      Output directory
+  DAO_GENERATE    Generation type (model, dao, or all)
+  DAO_MODEL_DIR   Model files output directory
+  DAO_DAO_DIR     DAO files output directory
+  DAO_NO_HEADER   Skip header comment if 'true'
 
 Please visit online documentation for more usage examples:
 https://github.com/hoist1999/mysql-plain-dao`);
@@ -66,10 +78,10 @@ https://github.com/hoist1999/mysql-plain-dao`);
     const options = program.opts();
 
     try {
-        // Validate generate type
-        if (options.generate && !['model', 'dao', 'all'].includes(options.generate)) {
-            throw new Error('Generate type must be one of: model, dao, all');
-        }
+        // 如果环境变量中的 TABLE 是逗号分隔的字符串，需要转换为数组
+        const tables = Array.isArray(options.table)
+            ? options.table
+            : options.table?.split(',').filter(Boolean) || [];
 
         const cliOptions: CliOptions = {
             writeHeader: options.header !== false,
@@ -81,7 +93,7 @@ https://github.com/hoist1999/mysql-plain-dao`);
 
         await executeGenerateAsync(
             options.conn,
-            options.table,
+            tables,
             cliOptions
         );
 

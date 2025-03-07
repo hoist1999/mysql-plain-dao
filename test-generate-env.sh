@@ -3,14 +3,16 @@
 # Load environment variables from .env.test-local
 source .env.test-local
 
-rm -rf ./test-output/*
+rm -rf ./test-output
 
-# Construct connection string from environment variables
-CONNECTION_STRING="mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
+# Set environment variables for mysql-plain-dao
+export DAO_CONN="mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
+export DAO_OUTPUT="./test-output"
+export DAO_GENERATE="all"
 
-# Execute the generate command
-echo "01 Test generate model and dao files"
-pnpm start -c "$CONNECTION_STRING" -o ./test-output
+# Execute the generate command using environment variables
+echo "01 Test generate model and dao files using environment variables"
+pnpm start
 
 # Define array of files to check
 files=(
@@ -32,6 +34,11 @@ for file in "${files[@]}"; do
         all_files_exist=false
     fi
 done
+
+# Clean up environment variables
+unset DAO_CONN
+unset DAO_OUTPUT
+unset DAO_GENERATE
 
 if [ "$all_files_exist" = true ]; then
     echo "✅ Test OK: All generated files found"

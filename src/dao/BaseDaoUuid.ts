@@ -2,14 +2,14 @@ import { escape, escapeId, format } from "mysql2";
 import { v4 as uuidv4 } from 'uuid';
 import { CommonDao, CommonDaoOption } from "./CommonDao";
 import { DbUtil } from "./DbUtil";
-import type { InsertModel, PlainObject } from "./Types";
+import type { PlainObject } from "./Types";
 
 export interface BaseDaoUUIDOption extends CommonDaoOption {
 	uuid_field?: string;
 }
 
 /** DAO class for tables with UUID as primary key */
-export class BaseDaoUUID<T extends PlainObject> extends CommonDao<T> {
+export class BaseDaoUUID<T extends PlainObject, InsertModelType extends PlainObject> extends CommonDao<T> {
 	protected uuid_field: string;
 
 	constructor(option: BaseDaoUUIDOption) {
@@ -21,7 +21,7 @@ export class BaseDaoUUID<T extends PlainObject> extends CommonDao<T> {
 	 * Insert data with application-generated UUID
 	 * @returns The generated UUID
 	 */
-	async insertAsync(item: InsertModel<T>): Promise<string> {
+	async insertAsync(item: InsertModelType): Promise<string> {
 		const { [this.uuid_field]: uuid, ...newInsertItem } = item;
 		const generatedUuid = uuidv4();
 		const sql = format(
@@ -56,7 +56,7 @@ export class BaseDaoUUID<T extends PlainObject> extends CommonDao<T> {
 	 * Execute a single SQL statement for all insertions.
 	 * ~1.374s for 100k records 
 	 * @returns Array of inserted items with their UUIDs */
-	async bulkInsertAsync(item_list: Array<T | InsertModel<T>>): Promise<Array<T>> {
+	async bulkInsertAsync(item_list: Array<InsertModelType>): Promise<Array<T>> {
 		if (!item_list || item_list.length == 0) {
 			return [];
 		}

@@ -19,3 +19,5 @@ export interface News {
     created_at?: Date | null;
     updated_at?: Date | null;
 }
+
+export type InsertNews = Omit<News, 'id'>;

@@ -1,16 +1,15 @@
 import { BaseDao } from "../../dao/BaseDao";
 import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
 import { DbUtil } from '../../dao/DbUtil';
-import type { InsertModel } from '../../dao/Types';
-import { News, enum_status } from '../generated_dao/News';
+import { InsertNews, News, enum_status } from '../generated_dao/News';
 import { NewsDao } from '../generated_dao/NewsDao';
-import { User } from '../generated_dao/User';
+import { InsertUser, User } from '../generated_dao/User';
 import { UserDao } from '../generated_dao/UserDao';
 
 describe('NewsDao', () => {
     let newsDao: NewsDao;
     let userDao: UserDao;
-    let testNews: InsertModel<News>;
+    let testNews: InsertNews;
     let testAuthorId: string;
     let testUserItem: User | null;
 
@@ -24,7 +23,7 @@ describe('NewsDao', () => {
         userDao = new UserDao();
 
         // Prepare test user data with all possible fields from schema
-        const testUser: InsertModel<User> = {
+        const testUser: InsertUser = {
             username: 'testuser',
             email: 'test@example.com',
             password_hash: 'hashed_password',
@@ -208,7 +207,7 @@ describe('NewsDao', () => {
     // userdao with custom uuid field
     describe('UserDao with custom UUID field', () => {
         it('should bulk insert users with custom UUID field', async () => {
-            class CustomNewsDao extends BaseDao<News> {
+            class CustomNewsDao extends BaseDao<News, InsertNews> {
                 constructor() {
                     super({
                         table_name: 'news',

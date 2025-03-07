@@ -1,6 +1,12 @@
-generated baseDao or baseDaoUui ...
+cli env OK
 
-cli env
+id or uuid custom? OK
+
+InsertModel OK
+
+cli with config file
+
+update readme and examples
 
 getItem, json
 multi thread get pool problem? and end pool
@@ -10,8 +16,6 @@ news enum_status
 matrix test on node 18...
 
 performance test
-
-update readme and examples
 
 getPagerDataAsync : SQL inject 
 
