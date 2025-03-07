@@ -7,6 +7,7 @@ import { CliOptions, GenerateType } from '../generator/Types';
 const dbConfig = getDbConfigFromEnv();
 const TEST_TABLE_USER = 'user';
 const TEST_TABLE_NEWS = 'news';
+const TEST_TABLE_BOOK = 'book';
 const CONNECTION_STRING = `mysql://${dbConfig.user}:${dbConfig.password}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`;
 
 const TEST_OUTPUT_DIR = path.join(__dirname, './test-output');
@@ -14,6 +15,8 @@ const modelFileUser = path.join(TEST_OUTPUT_DIR, 'User.ts');
 const daoFileUser = path.join(TEST_OUTPUT_DIR, 'UserDao.ts');
 const modelFileNews = path.join(TEST_OUTPUT_DIR, 'News.ts');
 const daoFileNews = path.join(TEST_OUTPUT_DIR, 'NewsDao.ts');
+const modelFileBook = path.join(TEST_OUTPUT_DIR, 'Book.ts');
+const daoFileBook = path.join(TEST_OUTPUT_DIR, 'BookDao.ts');
 
 describe('CLI Generator Tests', () => {
     const originalLog = console.log;
@@ -181,6 +184,34 @@ describe('CLI Generator Tests', () => {
         const newsContent = fs.readFileSync(daoFileNews, 'utf-8');
         expect(newsContent).toContain('export class NewsDao extends BaseDao<News>');
         expect(newsContent).toContain("table_name: 'news'");
+    });
+
+    it('should generate book dao with BaseDaoUUID', async () => {
+        const options = {
+            writeHeader: true,
+            generateType: 'all' as GenerateType,
+            outputDir: TEST_OUTPUT_DIR,
+        };
+
+        await executeGenerateAsync(
+            CONNECTION_STRING,
+            [TEST_TABLE_BOOK],
+            options
+        );
+
+        // Check model file content
+        expect(fs.existsSync(modelFileBook)).toBe(true);
+        const modelContent = fs.readFileSync(modelFileBook, 'utf-8');
+        expect(modelContent).toContain('export interface Book');
+        expect(modelContent).toContain('uuid: string');
+        expect(modelContent).toContain('title: string');
+        expect(modelContent).toContain('author_id: number');
+
+        // Check dao file content
+        expect(fs.existsSync(daoFileBook)).toBe(true);
+        const daoContent = fs.readFileSync(daoFileBook, 'utf-8');
+        expect(daoContent).toContain('export class BookDao extends BaseDaoUUID<Book>');
+        expect(daoContent).toContain("table_name: 'book'");
     });
 });
 

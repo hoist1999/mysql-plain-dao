@@ -10,7 +10,7 @@ async function determineBaseClass(
     schema: string,
     table: string
 ): Promise<{
-    baseClass: 'BaseDao' | 'BaseDaoWithUUID' | 'BaseDaoDoubleID';
+    baseClass: 'BaseDao' | 'BaseDaoDoubleID' | 'BaseDaoUUID';
     idField?: string;
     uuidField?: string;
 }> {
@@ -54,9 +54,9 @@ async function determineBaseClass(
             idField: idFieldName,
             uuidField: uuidFieldName
         };
-    } else if (hasUuidField) {
+    } else if (hasUuidField && !hasIntegerId) {
         return {
-            baseClass: 'BaseDaoWithUUID',
+            baseClass: 'BaseDaoUUID',
             uuidField: uuidFieldName
         };
     } else {
