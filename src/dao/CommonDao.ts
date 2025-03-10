@@ -65,6 +65,18 @@ export class CommonDao<T extends PlainObject> {
     }
 
     /**
+     * Get total count of records
+     * @returns Total count of records
+     */
+    async getTotalCountAsync(): Promise<number> {
+        let sql = format(
+            `SELECT count(*) AS total FROM ??`,
+            [this.table_name]
+        );
+        return await DbUtil.executeGetNumberAsync(sql) ?? 0;
+    }
+
+    /**
      * Get paginated data
      * For LEFT JOIN usage,
      * refer to WarehouseDao implementation
