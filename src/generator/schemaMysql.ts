@@ -201,8 +201,21 @@ export class MysqlDatabase implements Database {
             }
             const [results] = await this.db.query(queryString, escapedValues)
             return results as any[]
-        } catch (error) {
-            throw error
+        } catch (error: any) {
+            // Handle specific MySQL errors
+            if (error.code === 'ER_BAD_DB_ERROR') {
+                throw new Error(`Database "${this.defaultSchema}" not found.\n` +
+                    `This tool generates code from existing database. Please:\n` +
+                    `1. Verify your connection string\n` +
+                    `2. Ensure the database exists`);
+            } else if (error.code === 'ECONNREFUSED') {
+                throw new Error(`Could not connect to MySQL server. Please check:\n` +
+                    `1. MySQL server is running\n` +
+                    `2. Connection details are correct (host, port)`);
+            } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+                throw new Error(`Access denied. Please verify your username and password.`);
+            }
+            throw error;
         }
     }
 

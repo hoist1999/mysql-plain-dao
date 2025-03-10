@@ -96,10 +96,26 @@ https://github.com/hoist1999/mysql-plain-dao`);
             cliOptions
         );
 
-        console.log('Generation completed successfully!');
+        console.log('✨ Generation completed successfully!');
         process.exit(0);
-    } catch (e) {
-        console.error('Error during generation:', e);
+    } catch (e: any) {
+        console.error('\n❌ Generation failed:');
+        
+        // Display the user-friendly error message
+        if (e.message) {
+            console.error('\n' + e.message);
+        } else {
+            console.error('An unexpected error occurred during generation.');
+        }
+
+        // Add helpful tips based on common issues
+        console.error('\n📋 Troubleshooting tips:');
+        console.error('1. Make sure MySQL server is running');
+        console.error('2. Verify your connection string format:');
+        console.error('   mysql://user:password@host:port/database');
+        console.error('3. Check if you have proper permissions');
+        console.error('\nFor more help, visit: https://github.com/hoist1999/mysql-plain-dao\n');
+
         process.exit(1);
     }
 })().catch((e: any) => {
