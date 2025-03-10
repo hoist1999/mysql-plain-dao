@@ -600,12 +600,4 @@ export class DbUtil {
             connection.release();
         }
     }
-
-    // getMaxSortOrderAsync
-    static async getMaxSortOrderAsync(table_name: string, sort_order_field: string = "sort_order") {
-        const sql = `SELECT max(${sort_order_field}) AS max_sort_order FROM ??`;
-        const max_sort_order = await this.executeGetNumberAsync(sql, [table_name]);
-        return max_sort_order ?? 0;
-    }
-
 }

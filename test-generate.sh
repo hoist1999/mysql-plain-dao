@@ -24,6 +24,8 @@ files=(
     "./test-output/UserPermissionDao.ts"
     "./test-output/Book.ts"
     "./test-output/BookDao.ts"
+    "./test-output/Category.ts"
+    "./test-output/CategoryDao.ts"
 )
 
 # Check if all files exist
@@ -42,6 +44,3 @@ else
     echo "❌ Test Failed: Some files are missing"
     exit 1
 fi
-
-# pnpm start -c "$CONNECTION_STRING" --model-dir ./test-output/model --dao-dir ./test-output/dao
-

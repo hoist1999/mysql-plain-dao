@@ -5,13 +5,16 @@ import { InsertNews, News, enum_status } from '../generated_dao/News';
 import { NewsDao } from '../generated_dao/NewsDao';
 import { InsertUser, User } from '../generated_dao/User';
 import { UserDao } from '../generated_dao/UserDao';
+import { CategoryDao } from './../generated_dao/CategoryDao';
 
 describe('NewsDao', () => {
     let newsDao: NewsDao;
     let userDao: UserDao;
+    let categoryDao: CategoryDao;
     let testNews: InsertNews;
     let testAuthorId: string;
     let testUserItem: User | null;
+
 
     beforeAll(async () => {
         await DbUtil.initialize(getDbConfigFromEnv());
@@ -21,7 +24,7 @@ describe('NewsDao', () => {
 
         newsDao = new NewsDao();
         userDao = new UserDao();
-
+        categoryDao = new CategoryDao();
         // Prepare test user data with all possible fields from schema
         const testUser: InsertUser = {
             username: 'testuser',
@@ -225,13 +228,29 @@ describe('NewsDao', () => {
     });
 
     // getTotalCountAsync
-    describe('getTotalCountAsync', () => {
-        it('should get total count', async () => {
-            await newsDao.insertAsync({ ...testNews, title: 'Test News 1' });
-            await newsDao.insertAsync({ ...testNews, title: 'Test News 2' });
-            const totalCount = await newsDao.getTotalCountAsync();
-            expect(totalCount).toBe(2);
-        });
+    it('should get total count', async () => {
+        await newsDao.insertAsync({ ...testNews, title: 'Test News 1' });
+        await newsDao.insertAsync({ ...testNews, title: 'Test News 2' });
+        const totalCount = await newsDao.getTotalCountAsync();
+        expect(totalCount).toBe(2);
+    });
+
+
+    // get max sort order
+    it('should get max sort order', async () => {
+        // clear table category
+        await DbUtil.executeAsync('DELETE FROM category');
+
+        // insert 3 categories
+        await categoryDao.insertAsync({ name: 'Test Category 1', sort_order: 0 });
+        await categoryDao.insertAsync({ name: 'Test Category 2', sort_order: 1 });
+        await categoryDao.insertAsync({ name: 'Test Category 3', sort_order: 2 });
+
+        const maxSortOrder = await categoryDao.getMaxSortOrderAsync();
+        expect(maxSortOrder).toBe(2);
+
+        // clear table category
+        await DbUtil.executeAsync('DELETE FROM category');
     });
 
 }); 

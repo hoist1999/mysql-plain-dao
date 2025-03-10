@@ -50,6 +50,15 @@ export class CommonDao<T extends PlainObject> {
         return item_list;
     }
 
+    // get max sort order
+    async getMaxSortOrderAsync(sort_order_field: string = "sort_order"): Promise<number> {
+        let sql = format(
+            `SELECT max(${sort_order_field}) AS max_sort_order FROM ??`,
+            [this.table_name]
+        );
+        return await DbUtil.executeGetNumberAsync(sql) ?? 0;
+    }
+
     /**
      * Get total count of records
      * @returns Total count of records
@@ -72,7 +81,7 @@ export class CommonDao<T extends PlainObject> {
      * @param join_table_str JOIN clause
      * @returns `{ list, total }`
      */
-    protected async getPagerDataAsync(
+    async getPagerDataAsync(
         fields: string[] | string,
         where_str = "",
         {

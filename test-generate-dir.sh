@@ -24,6 +24,8 @@ files=(
     "./test-output/dao/UserPermissionDao.ts"
     "./test-output/model/Book.ts"
     "./test-output/dao/BookDao.ts"
+    "./test-output/model/Category.ts"
+    "./test-output/dao/CategoryDao.ts"
 )
 
 # Check if all files exist
