@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Test generate model and dao files using environment variables
+
 # Load environment variables from .env.test-local
 source .env.test-local
 

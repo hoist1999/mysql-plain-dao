@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test generate model and dao files in the same directory
+# Test generate model and dao files in different directories
 
 # Load environment variables from .env.test-local
 source .env.test-local
@@ -12,18 +12,18 @@ CONNECTION_STRING="mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_
 
 # Execute the generate command
 echo "01 Test generate model and dao files"
-pnpm start -c "$CONNECTION_STRING" -o ./test-output
+pnpm start -c "$CONNECTION_STRING" --model-dir ./test-output/model --dao-dir ./test-output/dao
 
 # Define array of files to check
 files=(
-    "./test-output/News.ts"
-    "./test-output/NewsDao.ts"
-    "./test-output/User.ts"
-    "./test-output/UserDao.ts"
-    "./test-output/UserPermission.ts"
-    "./test-output/UserPermissionDao.ts"
-    "./test-output/Book.ts"
-    "./test-output/BookDao.ts"
+    "./test-output/model/News.ts"
+    "./test-output/dao/NewsDao.ts"
+    "./test-output/model/User.ts"
+    "./test-output/dao/UserDao.ts"
+    "./test-output/model/UserPermission.ts"
+    "./test-output/dao/UserPermissionDao.ts"
+    "./test-output/model/Book.ts"
+    "./test-output/dao/BookDao.ts"
 )
 
 # Check if all files exist
@@ -43,5 +43,5 @@ else
     exit 1
 fi
 
-# pnpm start -c "$CONNECTION_STRING" --model-dir ./test-output/model --dao-dir ./test-output/dao
+
 

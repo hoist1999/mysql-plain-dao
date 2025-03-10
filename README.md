@@ -11,7 +11,9 @@ A TypeScript-first tool for generating data model objects from existing MySQL da
 In an era of AI-generated code, writing SQL queries has become easier than ever - AI can help generate queries while you maintain control over performance and debugging. This tool helps you maintain type safety while leveraging the full power of SQL.
 
 
-## Installation
+## Quick Start
+
+### 1. Installation
 
 ```bash
 # Using npm
@@ -21,12 +23,33 @@ npm install mysql-plain-dao
 pnpm add mysql-plain-dao
 ```
 
-## Command Line Tool
+### 2. Prepare MySQL Database
+
+First, create a MySQL database and tables. Here's an example of creating a `user` table:
+
+```sql
+CREATE DATABASE IF NOT EXISTS mydb;
+USE mydb;
+
+CREATE TABLE user (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+### 3. Generate Model and DAO using Command Line Tool
 
 Generate TypeScript interfaces and DAOs from your existing MySQL database tables:
 
 ```bash
-npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o src/dao/
+npx mysql-plain-dao -c mysql://user:pass@localhost:3306/mydb -t user -o src/dao/
 ```
 
 Generated files example:
@@ -64,7 +87,7 @@ export class UserDao extends BaseDao<User, InsertUser> {
 }
 ```
 
-Here's how to use the generated DAO class for CRUD operations:
+### 4. Here's how to use the generated DAO class for CRUD operations:
 
 ```typescript
 // src/user-crud-example.ts
@@ -116,7 +139,7 @@ async function main() {
             console.log('User updated successfully');
         }
 
-        // Read with conditions
+        // List all data
         const activeUsers = await userDao.getListAsync();
         console.log('Active users:', activeUsers);
 
@@ -153,28 +176,6 @@ main().catch(console.error);
 
 The library provides three base DAO classes for different primary key scenarios:
 
-- \`BaseDao<T>\`: For tables with auto-increment ID
-- \`BaseDaoUUID<T>\`: For tables with UUID primary key
-- \`BaseDaoDoubleID<T>\`: For tables with both ID and UUID
-
-The generator automatically selects the appropriate base class based on your table structure.
-
-## Contributing & Testing
-We welcome contributions! This project includes comprehensive test coverage for database operations, DAO functionality, and type generation. 
-
-Before submitting a pull request, please ensure you've:
-- Added tests for new features
-- Updated relevant documentation
-- Followed the existing code style
-
-For detailed testing information, please refer to our [Testing Guide](./docs/TESTING.md).
-
-
-## Inspired by
-
-This project was inspired by [schemats](https://github.com/SweetIQ/schemats), which is no longer actively maintained. Some code has been adapted from their implementation while the codebase has been rewritten in TypeScript and enhanced with modern features and additional functionality.
-
-
-## License
-
-MIT
+| Base Class | Description | Built-in CRUD Methods |
+|------------|-------------|----------------------|
+| `BaseDao<T>` | For tables with auto-increment ID | • `insertAsync()` - Create new records<br>• `getByIdAsync()` - Retrieve by ID<br>• `updateAsync()` - Update records<br>• `

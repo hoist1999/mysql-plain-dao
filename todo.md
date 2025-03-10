@@ -6,6 +6,8 @@ InsertModel OK
 
 cli with config file
 
+add native sql custom example. and test.
+
 update readme and examples
 
 getItem, json

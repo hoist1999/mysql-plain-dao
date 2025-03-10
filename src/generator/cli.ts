@@ -36,7 +36,6 @@ const program = new Command();
         .addOption(
             new Option('-o, --output <dir>', 'output directory for generated files')
                 .env('DAO_OUTPUT')
-                .makeOptionMandatory()
         )
         .addOption(
             new Option('-g, --generate <type>', 'generation type (model, dao, or all)')
