@@ -15,7 +15,6 @@ export class CommonDao<T extends PlainObject> {
     protected table_name: string;
     protected json_columns: string[];
 
-
     constructor(option: CommonDaoOption) {
         this.table_name = option.table_name;
         this.json_columns = option.json_columns !== undefined ? option.json_columns : [];
@@ -49,19 +48,6 @@ export class CommonDao<T extends PlainObject> {
         DbUtil.parseJson(item_list, "json_data");
 
         return item_list;
-    }
-
-    /**
-     * Get maximum sort order value plus one
-     * @returns Next available sort order
-     */
-    async getMaxSortOrderAsync(): Promise<number> {
-        let sql = format(
-            `SELECT max(sort_order) AS max_sorder FROM ??`,
-            [this.table_name]
-        );
-        let current_max_sort_order = await DbUtil.executeGetNumberAsync(sql) ?? 0;
-        return current_max_sort_order + 1;
     }
 
     /**

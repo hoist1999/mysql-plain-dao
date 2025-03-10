@@ -254,5 +254,25 @@ describe('UserDao', () => {
         });
     });
 
+    // get id from uuid
+    describe('Get ID from UUID', () => {
+        it('should get ID from UUID', async () => {
+            const insertedUuid = await userDao.insertAsync(testUser);
+            const id = await userDao.getIdFromUUIDAsync(insertedUuid);
+            expect(id).toBeDefined();
+            expect(id).toBeGreaterThan(0);
+        });
+    });
 
+    // get uuid from id
+    describe('Get UUID from ID', () => {
+        it('should get UUID from ID', async () => {
+            const insertedUuid = await userDao.insertAsync(testUser);
+            const id = await userDao.getIdFromUUIDAsync(insertedUuid);
+            const uuid = await userDao.getUUIDFromIdAsync(id!);
+            
+            expect(uuid).toBeDefined();
+            expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+        });
+    });
 }); 

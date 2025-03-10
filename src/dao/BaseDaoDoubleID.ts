@@ -43,4 +43,31 @@ export class BaseDaoDoubleID<T extends PlainObject, InsertModelType extends Plai
 		let result = await DbUtil.executeDeleteAsync(sql, [id]);
 		return result;
 	}
+
+	/**
+	 * Get the numeric ID from the database using UUID
+	 * @param uuid The UUID value
+	 * @returns The numeric ID or null if not found
+	 */
+	async getIdFromUUIDAsync(uuid: string): Promise<number | null> {
+		let sql = ` SELECT ${this.id_field} FROM ${this.table_name} WHERE ${this.uuid_field} = ? `;
+		let para = [uuid];
+
+		const id = await DbUtil.executeGetNumberAsync(sql, para);
+		return id;
+	}
+
+
+	/**
+	 * Get the UUID from the database using ID
+	 * @param id The numeric ID
+	 * @returns The UUID or null if not found
+	 */
+	async getUUIDFromIdAsync(id: number): Promise<string | null> {
+		let sql = ` SELECT ${this.uuid_field} FROM ${this.table_name} WHERE ${this.id_field} = ? `;
+		let para = [id];
+
+		const uuid = await DbUtil.executeGetStringAsync(sql, para);
+		return uuid;
+	}
 }

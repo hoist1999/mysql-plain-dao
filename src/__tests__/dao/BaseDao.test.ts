@@ -224,4 +224,14 @@ describe('NewsDao', () => {
         });
     });
 
+    // getTotalCountAsync
+    describe('getTotalCountAsync', () => {
+        it('should get total count', async () => {
+            await newsDao.insertAsync({ ...testNews, title: 'Test News 1' });
+            await newsDao.insertAsync({ ...testNews, title: 'Test News 2' });
+            const totalCount = await newsDao.getTotalCountAsync();
+            expect(totalCount).toBe(2);
+        });
+    });
+
 }); 

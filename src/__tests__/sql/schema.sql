@@ -1,6 +1,5 @@
 -- CREATE DATABASE IF NOT EXISTS test_db;
 -- USE test_db;
-
 -- test table: user which has uuid and id as primary key
 CREATE TABLE IF NOT EXISTS user (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -59,7 +58,6 @@ CREATE TABLE IF NOT EXISTS user_permission (
     INDEX idx_permission_name (permission_name),
     INDEX idx_resource (resource_type, resource_id)
 );
-
 
 -- test table: book which has only uuid as primary key
 CREATE TABLE IF NOT EXISTS book (
