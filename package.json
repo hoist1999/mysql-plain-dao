@@ -24,6 +24,7 @@
     "build:esm": "tsc -p tsconfig.esm.json",
     "test": "NODE_ENV=test-local DEBUG=-DAO jest --runInBand",
     "test-docker": "NODE_ENV=test-docker DEBUG=-DAO jest --runInBand",
+    "test-debugger": "NODE_ENV=test-local DEBUG=DAO node --inspect-brk node_modules/jest/bin/jest.js --runInBand --coverage=false",
     "prepublishOnly": "pnpm build",
     "version:patch": "pnpm version patch",
     "version:minor": "pnpm version minor",

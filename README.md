@@ -178,4 +178,208 @@ The library provides three base DAO classes for different primary key scenarios:
 
 | Base Class | Description | Built-in CRUD Methods |
 |------------|-------------|----------------------|
-| `BaseDao<T>` | For tables with auto-increment ID | • `insertAsync()` - Create new records<br>• `getByIdAsync()` - Retrieve by ID<br>• `updateAsync()` - Update records<br>• `
+| `BaseDao<T>` | For tables with auto-increment ID | • `insertAsync()` - Create new records<br>• `getByIdAsync()` - Retrieve by ID<br>• `updateAsync()` - Update records<br>• `deleteByIdAsync()` - Delete by ID<br>• `getListAsync()` - List all records |
+| `BaseDaoUUID<T>` | For tables with UUID primary key | • `insertAsync()` - Create new records<br>• `getByUuidAsync()` - Retrieve by UUID<br>• `updateAsync()` - Update records<br>• `deleteByUuidAsync()` - Delete by UUID<br>• `getListAsync()` - List all records |
+| `BaseDaoDoubleID<T>` | For tables with both ID and UUID | • `insertAsync()` - Create new records<br>• `getByIdAsync()` - Retrieve by ID<br>• `getByUuidAsync()` - Retrieve by UUID<br>• `updateAsync()` - Update records<br>• `deleteByIdAsync()` - Delete by ID<br>• `deleteByUuidAsync()` - Delete by UUID<br>• `getListAsync()` - List all records |
+
+The generator automatically selects the appropriate base class based on your table structure.
+
+## Writing Custom DAO Methods
+
+Each generated DAO class comes with built-in CRUD operations:
+
+
+Need more specific database operations? You can add custom methods to your DAO class. Here's how to extend the `UserDao` class with custom SQL queries:
+
+   ```typescript
+// src/dao/UserDao.ts
+
+import { BaseDaoDoubleID } from '../../dao/BaseDaoDoubleID';
+import { DbUtil } from '../../dao/DbUtil';
+import type { InsertUser, User } from './User';
+
+export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
+    constructor() {
+        super({
+            table_name: 'user',
+        });
+    }
+
+    // You can add your own methods below
+
+
+    // Custom methods below
+
+    /** Find active users who logged in within the last n days */
+    async findActiveUsersAsync(): Promise<User[]> {
+        const sql = `
+            SELECT * FROM user 
+            WHERE is_active = true 
+            ORDER BY last_login DESC
+            LIMIT 100
+        `;
+
+        return await DbUtil.executeGetListAsync<User>(sql);
+    }
+
+    /** Update user status and record the change time */
+    async updateUserStatusAsync(userId: number, isActive: boolean): Promise<number> {
+        const sql = `
+            UPDATE user 
+            SET is_active = ?,
+                updated_at = NOW()
+            WHERE id = ?
+        `;
+        return await DbUtil.executeUpdateAsync(sql, [isActive, userId]);
+    }
+
+    /** Get user statistics by registration date */
+    async getUserStatsByDateAsync(startDate: Date, endDate: Date)
+        : Promise<Array<{ date: string; count: number }>> {
+        const sql = `
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as count
+            FROM user
+            WHERE created_at BETWEEN ? AND ?
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        `;
+        const result = await DbUtil.executeGetListAsync<{ date: string; count: number }>(
+            sql,
+            [startDate, endDate]
+        );
+        return result;
+    }
+
+    /** Search users with complex conditions */
+    async searchUsersAsync(params: {
+        keyword?: string;
+        isActive?: boolean;
+        startDate?: Date;
+        limit?: number;
+    }): Promise<User[]> {
+        const conditions: string[] = ['1=1'];
+        const values: any[] = [];
+
+        if (params.keyword) {
+            const keyword = `%${params.keyword}%`;
+            conditions.push('(username LIKE ? OR email LIKE ?)');
+            values.push(keyword, keyword);
+        }
+
+        if (params.isActive !== undefined) {
+            conditions.push('is_active = ?');
+            values.push(params.isActive);
+        }
+
+        if (params.startDate) {
+            conditions.push('created_at >= ?');
+            values.push(params.startDate);
+        }
+
+        const sql = `
+            SELECT * FROM user
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY created_at DESC
+            LIMIT ?
+        `;
+
+        values.push(params.limit || 100);
+
+        return await DbUtil.executeGetListAsync<User>(sql, values);
+    }
+}
+```
+
+Usage example:
+
+```typescript
+const userDao = new UserDao();
+
+// Find active users
+const recentUsers = await userDao.findActiveUsersAsync();
+
+// Update user status
+await userDao.updateUserStatusAsync(123, false);
+
+// Get user registration statistics for the last month
+const startDate = new Date();
+startDate.setMonth(startDate.getMonth() - 1);
+const stats = await userDao.getUserStatsByDateAsync(startDate, new Date());
+
+// Search users with complex conditions
+const searchResults = await userDao.searchUsersAsync({
+    keyword: 'user',
+    isActive: true,
+    startDate: new Date('2024-01-01T00:00:00Z'),
+    limit: 10
+});
+```
+
+## SQL Injection Prevention
+
+SQL injection is one of the most common web application vulnerabilities. Here's how to write secure SQL queries using this library:
+
+### ❌ Unsafe Example (DO NOT USE)
+
+```typescript
+// DON'T DO THIS - Vulnerable to SQL injection
+class UnsafeUserDao {
+    async searchUsers(keyword: string, isActive: boolean) {
+        // DANGEROUS: Direct string concatenation
+        const sql = `
+            SELECT * FROM user 
+            WHERE username LIKE '%${keyword}%'
+            AND is_active = ${isActive}
+        `;
+        return await DbUtil.executeGetListAsync(sql);
+    }
+}
+
+// This could be exploited:
+await userDao.searchUsers("' OR '1'='1'; DROP TABLE user; --", true);
+```
+
+### ✅ Safe Example (Recommended)
+
+```typescript
+class UserDao extends BaseDaoDoubleID<User, InsertUser> {
+    // Method 1: Using parameterized queries (Recommended)
+    async searchUsers(keyword: string, isActive: boolean) {
+        const sql = `
+            SELECT * FROM user 
+            WHERE username LIKE ? 
+            AND is_active = ?
+        `;
+        return await DbUtil.executeGetListAsync(sql, [`%${keyword}%`, isActive]);
+    }
+
+    // Method 2: Using mysql2's format function
+    async searchUsersWithFormat(keyword: string, isActive: boolean) {
+        const sql = format(
+            'SELECT * FROM user WHERE username LIKE ? AND is_active = ?',
+            [`%${keyword}%`, isActive]
+        );
+        return await DbUtil.executeGetListAsync(sql);
+    }
+}
+```
+
+### Key Security Points
+
+1. **Never** concatenate user input directly into SQL strings
+2. **Always** use parameterized queries with `?` placeholders
+3. **Consider** using `mysql2`'s `format` or `escape` functions for complex queries
+4. **Validate** and sanitize input before using it in queries
+5. **Follow** the built-in DAO methods pattern of using parameterized queries instead of string concatenation
+
+
+## Inspired by
+
+This project was inspired by [schemats](https://github.com/SweetIQ/schemats), which is no longer actively maintained. Some code has been adapted from their implementation while the codebase has been rewritten in TypeScript and enhanced with modern features and additional functionality.
+
+
+## License
+
+MIT

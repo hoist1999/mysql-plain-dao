@@ -6,13 +6,24 @@ import { BaseDaoDoubleID } from './../../dao/BaseDaoDoubleID';
 
 // Test user table which has both uuid and id as primary key
 describe('UserDao', () => {
-    let userDao: UserDao;
-    let testUser: InsertUser;
+    let userDao: UserDao = new UserDao();
+    // Prepare test user data with all possible fields from schema
+    let testUser: InsertUser = {
+        username: 'testuser',
+        email: 'test@example.com',
+        password_hash: 'hashed_password',
+        first_name: 'Test',
+        last_name: 'User',
+        phone: '+1234567890',
+        is_active: true,
+        role: 'user',
+        last_login: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+    };
 
     beforeAll(async () => {
         await DbUtil.initialize(getDbConfigFromEnv());
-
-        userDao = new UserDao();
     });
 
     afterAll(async () => {
@@ -22,21 +33,6 @@ describe('UserDao', () => {
     beforeEach(async () => {
         // Clear table data
         await DbUtil.executeAsync('DELETE FROM user');
-
-        // Prepare test user data with all possible fields from schema
-        testUser = {
-            username: 'testuser',
-            email: 'test@example.com',
-            password_hash: 'hashed_password',
-            first_name: 'Test',
-            last_name: 'User',
-            phone: '+1234567890',
-            is_active: true,
-            role: 'user',
-            last_login: new Date(),
-            created_at: new Date(),
-            updated_at: new Date()
-        };
     });
 
     describe('Create operations', () => {
@@ -270,9 +266,157 @@ describe('UserDao', () => {
             const insertedUuid = await userDao.insertAsync(testUser);
             const id = await userDao.getIdFromUUIDAsync(insertedUuid);
             const uuid = await userDao.getUUIDFromIdAsync(id!);
-            
+
             expect(uuid).toBeDefined();
             expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+        });
+    });
+
+    // Custom DAO methods tests
+    describe('Custom DAO methods', () => {
+        beforeEach(async () => {
+            // Clear table data
+            await DbUtil.executeAsync('DELETE FROM user');
+
+            // Insert test users with different dates and statuses
+            const users = [
+                {
+                    ...testUser,
+                    username: 'user1',
+                    email: 'user1@test.com',
+                    is_active: true,
+                    last_login: new Date('2024-01-01T00:00:00Z'),
+                    created_at: new Date('2024-01-01T00:00:00Z')
+                },
+                {
+                    ...testUser,
+                    username: 'user2',
+                    email: 'user2@test.com',
+                    is_active: false,
+                    last_login: new Date('2024-01-15T00:00:00Z'),
+                    created_at: new Date('2024-01-15T00:00:00Z')
+                },
+                {
+                    ...testUser,
+                    username: 'john_doe',
+                    email: 'john@test.com',
+                    is_active: true,
+                    last_login: new Date('2024-02-01T00:00:00Z'),
+                    created_at: new Date('2024-02-01T00:00:00Z')
+                }
+            ];
+
+            await userDao.bulkInsertAsync(users);
+        });
+
+        describe('findActiveUsersAsync', () => {
+            it('should find active users who logged in within the specified days', async () => {
+                const users = await userDao.findActiveUsersAsync();
+                expect(users.length).toBe(2); // Should find 2 active users
+                expect(users.every(u => u.is_active)).toBe(true);
+                expect(users[0].last_login).toBeInstanceOf(Date);
+            });
+        });
+
+        describe('updateUserStatusAsync', () => {
+            it('should update user status and record change time', async () => {
+                const user = (await userDao.getListAsync())[0];
+                const beforeUpdate = new Date();
+                await userDao.updateUserStatusAsync(user.id, false);
+                const afterUpdate = new Date();
+
+                const updatedUser = await userDao.getByIdAsync(user.id);
+                expect(updatedUser).toBeDefined();
+                expect(Boolean(updatedUser!.is_active)).toBe(false);
+
+                // Check if updated_at is set correctly - using second precision
+                const beforeUpdateSeconds = Math.floor(beforeUpdate.getTime() / 1000) * 1000;
+                const afterUpdateSeconds = Math.ceil(afterUpdate.getTime() / 1000) * 1000;
+                const updatedAtTime = updatedUser!.updated_at!.getTime();
+                expect(updatedAtTime).toBeGreaterThanOrEqual(beforeUpdateSeconds);
+                expect(updatedAtTime).toBeLessThanOrEqual(afterUpdateSeconds);
+            });
+        });
+
+        describe('getUserStatsByDateAsync', () => {
+            it('should return correct user registration statistics', async () => {
+                const startDate = new Date('2024-01-01T00:00:00Z');
+                const endDate = new Date('2024-02-01T23:59:59Z');
+                const stats = await userDao.getUserStatsByDateAsync(startDate, endDate);
+
+                expect(stats).toBeDefined();
+                expect(stats[0].date).toBeDefined();
+                expect(stats[0].count).toBeGreaterThan(0);
+
+                // Verify total count
+                const totalUsers = stats.reduce((sum, stat) => sum + stat.count, 0);
+                expect(totalUsers).toBe(3);
+            });
+
+            it('should return empty array for date range with no users', async () => {
+                const startDate = new Date('2023-01-01');
+                const endDate = new Date('2023-12-31');
+                const stats = await userDao.getUserStatsByDateAsync(startDate, endDate);
+                expect(stats).toEqual([]);
+            });
+        });
+
+        describe('searchUsersAsync', () => {
+            it('should search users by keyword', async () => {
+                const results = await userDao.searchUsersAsync({ keyword: 'john' });
+                expect(results).toHaveLength(1);
+                expect(results[0].username).toBe('john_doe');
+            });
+
+            it('should search users by active status', async () => {
+                const activeUsers = await userDao.searchUsersAsync({ isActive: true });
+                expect(activeUsers.length).toBe(2);
+                expect(activeUsers.every(u => u.is_active)).toBe(true);
+
+                const inactiveUsers = await userDao.searchUsersAsync({ isActive: false });
+                expect(inactiveUsers.length).toBe(1);
+                expect(inactiveUsers.every(u => !u.is_active)).toBe(true);
+            });
+
+            it('should search users by start date', async () => {
+                const results = await userDao.searchUsersAsync({
+                    startDate: new Date('2024-01-15')
+                });
+                expect(results.length).toBe(2);
+            });
+
+            it('should respect limit parameter', async () => {
+                const results = await userDao.searchUsersAsync({ limit: 2 });
+                expect(results.length).toBe(2);
+            });
+
+            it('should handle SQL injection attempts safely', async () => {
+                const results = await userDao.searchUsersAsync({
+                    keyword: "' OR '1'='1"
+                });
+                expect(results.length).toBe(0);
+            });
+
+            it('should combine multiple search conditions', async () => {
+                const results = await userDao.searchUsersAsync({
+                    keyword: 'user',
+                    isActive: true,
+                    startDate: new Date('2024-01-01T00:00:00Z'),
+                    limit: 10
+                });
+                expect(results.length).toBe(1);
+                expect(results[0].username).toBe('user1');
+            });
+
+            it('sql injection should be safe', async () => {
+                const results = await userDao.searchUsersAsync({
+                    keyword: "'; DROP TABLE user; --",
+                    isActive: true,
+                    startDate: new Date('2024-01-01T00:00:00Z'),
+                    limit: 10
+                });
+                expect(results.length).toBe(0);
+            });
         });
     });
 }); 

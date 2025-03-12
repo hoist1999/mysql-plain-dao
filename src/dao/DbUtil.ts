@@ -19,17 +19,26 @@ export class DatabaseError extends Error {
 
 export type QueryResult<T> = T extends Array<infer U> ? U[] : T;
 
+// Define a Symbol for the pool key
+const POOL_KEY = Symbol.for('mysql-plain-dao:pool');
+
+interface Global {
+    [POOL_KEY]?: mysql.Pool;
+}
+
+declare const global: Global;
+
 /** 
  * Database CRUD utility class for MySQL/MariaDB
  * Provides connection pooling and type-safe database operations
  */
 export class DbUtil {
-    private static pool: mysql.Pool | null = null;
-    private static options: mysql.PoolOptions;
-    //default options
-    private static defaultOptions: mysql.PoolOptions = {
-        //enable named placeholders
-        namedPlaceholders: true
+    private static getGlobalPool(): mysql.Pool | undefined {
+        return global[POOL_KEY];
+    }
+
+    private static setGlobalPool(pool: mysql.Pool): void {
+        global[POOL_KEY] = pool;
     }
 
     /**
@@ -61,47 +70,45 @@ export class DbUtil {
      * - namedPlaceholders: true (enables :name style parameters)
      */
     static initialize(config: mysql.PoolOptions): void {
-        this.options = config;
-        this.getPool();
+        if (this.getGlobalPool()) {
+            return;
+        }
+
+        const poolConfig: mysql.PoolOptions = {
+            namedPlaceholders: true,
+            ...config,
+        };
+
+        const pool = mysql.createPool(poolConfig);
+        this.setGlobalPool(pool);
     }
 
     /**
      * Get the database connection pool
      * @returns The database connection pool
      */
-    static getPool(): mysql.Pool {
-        if (!this.pool) {
-            const currentOptions = {
-                ...this.defaultOptions,
-                ...this.options,
-            }
-
-            this.pool = mysql.createPool(currentOptions);
-
-            if (this.pool) {
-                const debugOptions = {
-                    ...currentOptions,
-                    password: currentOptions.password ? '****** (hidden)' : 'empty' // Hide password in logs
-                };
-                debug("Pool created with options:");
-                debug(debugOptions);
-            }
+    static async getPool(): Promise<mysql.Pool> {
+        if (!this.getGlobalPool()) {
+            throw new Error('Database pool not initialized. Call DbUtil.initialize() first.');
         }
-        return this.pool;
+        return this.getGlobalPool()!;
     }
 
     /**
      * Get a database connection from the pool
      */
     static async getConnection(): Promise<mysql.PoolConnection> {
-        return await this.getPool().getConnection();
+        const pool = await this.getPool()
+        const conn = await pool.getConnection();
+        return conn;
     }
 
     /** Release all connections and end the pool */
     static async endPoolAsync() {
-        if (this.pool) {
-            await this.pool.end();
-            this.pool = null;
+        const pool = this.getGlobalPool();
+        if (pool) {
+            await pool.end();
+            delete global[POOL_KEY];
             debug("Pool ended");
         }
     }

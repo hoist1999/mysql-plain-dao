@@ -25,7 +25,7 @@ export class CommonDao<T extends PlainObject> {
         sql: string,
         paras?: ParasType
     ): Promise<T[]> {
-        return await DbUtil.executeGetListAsync(sql, paras);
+        return await DbUtil.executeGetListAsync<T>(sql, paras);
     }
 
     /** Get single data record */

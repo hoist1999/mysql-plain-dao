@@ -4,6 +4,10 @@ id or uuid custom? OK
 
 InsertModel OK
 
+readme custom method example.
+
+model: table comment, column comment
+
 cli with config file
 
 add native sql custom example. and test.
