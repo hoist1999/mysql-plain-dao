@@ -30,3 +30,8 @@ performance test
 
 getPagerDataAsync : SQL inject 
 
+if no auto increment id detect, prompt to user, or InsertXX will not be generated.
+
+config file ignore table list [...]
+
+config file? exclude some table?

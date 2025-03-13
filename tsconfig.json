@@ -2,7 +2,7 @@
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
         "declaration": true,
-        "removeComments": true,
+        "removeComments": false,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "sourceMap": true,
