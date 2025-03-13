@@ -35,3 +35,5 @@ if no auto increment id detect, prompt to user, or InsertXX will not be generate
 config file ignore table list [...]
 
 config file? exclude some table?
+
+enum to CamelCase? 

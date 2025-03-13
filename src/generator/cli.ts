@@ -15,18 +15,40 @@ import { Command, Option } from 'commander';
 import type { CliOptions, GenerateType } from './Types';
 import { executeGenerateAsync } from './generate';
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 
 const program = new Command();
 
 // Read version from package.json
-const packageJson = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8'));
+let version = '0.1.2-beta.34'; // Default version as fallback
+try {
+    // Try multiple possible locations for package.json
+    const possiblePaths = [
+        join(__dirname, '../../package.json'),
+        join(__dirname, '../../../package.json'),
+        join(process.cwd(), 'package.json')
+    ];
+
+    for (const path of possiblePaths) {
+        try {
+            const content = readFileSync(path, 'utf-8');
+            const pkg = JSON.parse(content);
+            version = pkg.version;
+            break;
+        } catch (e) {
+            continue;
+        }
+    }
+} catch (e) {
+    // Fallback to default version if all attempts fail
+    console.warn('Warning: Could not read package.json version, using default version');
+}
 
 (async () => {
     program
         .name('mysql-plain-dao')
         .description('Generate TypeScript models and DAO from MySQL database tables')
-        .version(packageJson.version);
+        .version(version);
 
     program
         .addOption(
