@@ -14,14 +14,19 @@
 import { Command, Option } from 'commander';
 import type { CliOptions, GenerateType } from './Types';
 import { executeGenerateAsync } from './generate';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 const program = new Command();
+
+// Read version from package.json
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8'));
 
 (async () => {
     program
         .name('mysql-plain-dao')
         .description('Generate TypeScript models and DAO from MySQL database tables')
-        .version('1.0.0');
+        .version(packageJson.version);
 
     program
         .addOption(
