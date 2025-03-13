@@ -4,15 +4,20 @@ id or uuid custom? OK
 
 InsertModel OK
 
-readme custom method example.
+readme custom method example. OK
+
+add native sql custom example. and test. OK
+
+update readme and examples OK
+
+unit test for sql injection OK
+
+Writing Custom DAO Methods
+用BaseDao举例可能比较简化一些，比较double Id比较少使用。
 
 model: table comment, column comment
 
 cli with config file
-
-add native sql custom example. and test.
-
-update readme and examples
 
 getItem, json
 multi thread get pool problem? and end pool
@@ -25,4 +30,3 @@ performance test
 
 getPagerDataAsync : SQL inject 
 
-unit test for sql injection

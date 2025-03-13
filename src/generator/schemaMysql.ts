@@ -3,7 +3,7 @@ import _ from 'lodash'
 import mysql from 'mysql2/promise'
 import { parse as urlParse } from 'url'
 import { transformTypeName } from './common'
-import type { CliOptions, Database, TableDefinition } from './Types'
+import type { CliOptions, Database, TableDefinition, TableMetadata } from './Types'
 
 export class MysqlDatabase implements Database {
     private db: mysql.Connection | null = null
@@ -87,45 +87,63 @@ export class MysqlDatabase implements Database {
         return mysqlEnum.replace(/(^(enum|set)\('|'\)$)/gi, '').split(`','`)
     }
 
-    private static getEnumNameFromColumn(dataType: string, columnName: string): string {
-        return `${dataType}_${columnName}`
+    private static getEnumNameFromColumn(tableName: string, dataType: string, columnName: string): string {
+        return `enum_${tableName}_${columnName}`
     }
 
     public query(queryString: string) {
         return this.queryAsync(queryString)
     }
 
-    public async getEnumTypes(schema?: string) {
+    public async getEnumTypes(schema?: string, tableName?: string) {
         let enums: any = {}
-        let enumSchemaWhereClause: string
-        let params: string[]
+        let whereClause = 'WHERE data_type IN (\'enum\', \'set\')'
+        let params: string[] = []
+
         if (schema) {
-            enumSchemaWhereClause = `and table_schema = ?`
-            params = [schema]
-        } else {
-            enumSchemaWhereClause = ''
-            params = []
+            whereClause += ' AND table_schema = ?'
+            params.push(schema)
         }
+
+        if (tableName) {
+            whereClause += ' AND table_name = ?'
+            params.push(tableName)
+        }
+
         const rawEnumRecords = await this.queryAsync(
-            'SELECT column_name, column_type, data_type ' +
+            'SELECT table_name, column_name, column_type, data_type ' +
             'FROM information_schema.columns ' +
-            `WHERE data_type IN ('enum', 'set') ${enumSchemaWhereClause}`,
+            whereClause,
             params
         )
-        rawEnumRecords.forEach((enumItem: { column_name: string, column_type: string, data_type: string }) => {
-            const enumName = MysqlDatabase.getEnumNameFromColumn(enumItem.data_type, enumItem.column_name)
+
+        rawEnumRecords.forEach((enumItem: {
+            table_name: string,
+            column_name: string,
+            column_type: string,
+            data_type: string
+        }) => {
+            const enumName = MysqlDatabase.getEnumNameFromColumn(
+                enumItem.table_name,
+                enumItem.data_type,
+                enumItem.column_name
+            )
             const enumValues = MysqlDatabase.parseMysqlEnumeration(enumItem.column_type)
-            if (enums[enumName] && !_.isEqual(enums[enumName], enumValues)) {
-                const errorMsg = `Multiple enums with the same name and contradicting types were found: ` +
-                    `${enumItem.column_name}: ${JSON.stringify(enums[enumName])} and ${JSON.stringify(enumValues)}`
-                throw new Error(errorMsg)
-            }
             enums[enumName] = enumValues
         })
         return enums
     }
 
-    public async getTableDefinition(tableName: string, tableSchema: string): Promise<TableDefinition> {
+    public async getTableDefinition(tableName: string, tableSchema: string): Promise<TableMetadata> {
+        // First get the table comment
+        const tableInfo = await this.queryAsync(
+            `SELECT table_comment 
+             FROM information_schema.tables 
+             WHERE table_schema = ? AND table_name = ?`,
+            [tableSchema, tableName]
+        );
+
+        // Get column information including comments
         const tableColumns = await this.queryAsync(
             `SELECT 
                 c.column_name,
@@ -133,6 +151,7 @@ export class MysqlDatabase implements Database {
                 c.is_nullable,
                 c.column_key,
                 c.character_maximum_length,
+                c.column_comment,
                 CASE 
                     WHEN tc.constraint_type = 'UNIQUE' OR c.column_key = 'UNI' THEN 1 
                     ELSE 0 
@@ -159,28 +178,38 @@ export class MysqlDatabase implements Database {
             column_key: string;
             character_maximum_length: number;
             is_unique: number;
+            column_comment: string;
         }) => {
             const columnName = schemaItem.column_name;
             const dataType = schemaItem.data_type;
 
             tableDefinition[columnName] = {
                 udtName: /^(enum|set)$/i.test(dataType)
-                    ? MysqlDatabase.getEnumNameFromColumn(dataType, columnName)
+                    ? MysqlDatabase.getEnumNameFromColumn(
+                        tableName,
+                        dataType,
+                        columnName
+                    )
                     : dataType,
                 nullable: schemaItem.is_nullable === 'YES',
                 isPrimaryKey: schemaItem.column_key === 'PRI',
                 isUnique: schemaItem.is_unique === 1,
-                characterMaximumLength: schemaItem.character_maximum_length
+                characterMaximumLength: schemaItem.character_maximum_length,
+                comment: schemaItem.column_comment || undefined
             };
         });
 
-        return tableDefinition;
+        return {
+            comment: tableInfo[0]?.table_comment || undefined,
+            columns: tableDefinition
+        };
     }
 
     public async getTableTypes(tableName: string, tableSchema: string, options: CliOptions) {
         const enumTypes: any = await this.getEnumTypes(tableSchema)
         let customTypes = _.keys(enumTypes)
-        return MysqlDatabase.mapTableDefinitionToType(await this.getTableDefinition(tableName, tableSchema), customTypes, options)
+        const tableMetadata = await this.getTableDefinition(tableName, tableSchema)
+        return MysqlDatabase.mapTableDefinitionToType(tableMetadata.columns, customTypes, options)
     }
 
     public async getSchemaTables(schemaName: string): Promise<string[]> {

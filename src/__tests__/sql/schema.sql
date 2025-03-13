@@ -1,24 +1,25 @@
 -- CREATE DATABASE IF NOT EXISTS test_db;
 -- USE test_db;
 -- test table: user which has uuid and id as primary key
+-- User table: Stores user account information and profile details
 CREATE TABLE IF NOT EXISTS user (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    uuid VARCHAR(36) NOT NULL,
-    username VARCHAR(50) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    password_hash VARCHAR(100) NOT NULL,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50),
-    phone VARCHAR(20),
-    is_active BOOLEAN DEFAULT true,
-    role ENUM('admin', 'user', 'guest') DEFAULT 'user',
-    last_login DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id INT PRIMARY KEY AUTO_INCREMENT COMMENT 'Primary key, auto-incrementing identifier',
+    uuid VARCHAR(36) NOT NULL COMMENT 'Unique identifier (UUID format) for external reference',
+    username VARCHAR(50) NOT NULL COMMENT 'Unique username for login',
+    email VARCHAR(100) NOT NULL COMMENT 'User email address, must be unique',
+    password_hash VARCHAR(100) NOT NULL COMMENT 'Hashed password for user authentication',
+    first_name VARCHAR(50) COMMENT 'User first name',
+    last_name VARCHAR(50) COMMENT 'User last name',
+    phone VARCHAR(20) COMMENT 'Contact phone number',
+    is_active BOOLEAN DEFAULT true COMMENT 'Flag indicating if the user account is active',
+    role ENUM('admin', 'user', 'guest') DEFAULT 'user' COMMENT 'User role for access control',
+    last_login DATETIME COMMENT 'Timestamp of the last successful login',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when the record was created',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Timestamp when the record was last updated',
     UNIQUE KEY uk_email (email),
     UNIQUE KEY uk_username (username),
     UNIQUE KEY uk_uuid (uuid)
-);
+) COMMENT 'Stores user account information including authentication and profile details';
 
 CREATE TABLE IF NOT EXISTS news (
     id INT PRIMARY KEY AUTO_INCREMENT,

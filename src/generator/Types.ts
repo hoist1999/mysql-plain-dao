@@ -4,19 +4,25 @@ export interface ColumnDefinition {
     tsType?: string,
     isPrimaryKey: boolean,
     isUnique: boolean,
-    characterMaximumLength?: number
+    characterMaximumLength?: number,
+    comment?: string
 }
 
 export interface TableDefinition {
     [columnName: string]: ColumnDefinition
 }
 
+export interface TableMetadata {
+    comment?: string;
+    columns: TableDefinition;
+}
+
 export interface Database {
     connectionString: string
     query(queryString: string): Promise<Object[]>
     getDefaultSchema(): string
-    getEnumTypes(schema?: string): any
-    getTableDefinition(tableName: string, tableSchema: string): Promise<TableDefinition>
+    getEnumTypes(schema?: string, tableName?: string): any
+    getTableDefinition(tableName: string, tableSchema: string): Promise<TableMetadata>
     getTableTypes(tableName: string, tableSchema: string, options: CliOptions): Promise<TableDefinition>
     getSchemaTables(schemaName: string): Promise<string[]>
     getPrimaryKey(schema: string, table: string): Promise<{ dataType: string } | null>
