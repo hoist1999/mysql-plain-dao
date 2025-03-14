@@ -116,7 +116,7 @@ export async function typescriptOfTable(db: Database | string,
         const isStringType = ['char', 'varchar'].includes(def.udtName.toLowerCase());
         return name.toLowerCase() === 'uuid' &&
             isStringType &&
-            def.isUnique;
+            (def.isUnique || def.isPrimaryKey);
     });
 
     // Generate InsertModel type if needed

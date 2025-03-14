@@ -170,7 +170,7 @@ export async function generateAndWriteDaos(
 
             // Check if file already exists
             if (fs.existsSync(outputPath)) {
-                console.log(`⏭️  Skipping ${fileName} - file already exists\n`)
+                console.log(`⏭️  Skipping ${fileName} - file already exists`)
                 continue
             }
 
