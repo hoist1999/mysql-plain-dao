@@ -12,6 +12,10 @@ update readme and examples OK
 
 unit test for sql injection OK
 
+generate progress console out OK
+
+generate model console out OK
+
 Writing Custom DAO Methods
 用BaseDao举例可能比较简化一些，比较double Id比较少使用。
 
@@ -37,9 +41,3 @@ config file ignore table list [...]
 config file? exclude some table?
 
 enum to CamelCase? 
-
-generate progress console out
-
-generate model console out
-
-executeGetNumberAsync: return 0
