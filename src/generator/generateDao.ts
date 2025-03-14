@@ -170,7 +170,7 @@ export async function generateAndWriteDaos(
 
             // Check if file already exists
             if (fs.existsSync(outputPath)) {
-                console.log(`⏭️  Skipping ${fileName} - file already exists`)
+                console.log(`⏭️  Skipping ${fileName} - file already exists\n`)
                 continue
             }
 
@@ -180,7 +180,7 @@ export async function generateAndWriteDaos(
             // Ensure output directory exists
             fs.mkdirSync(outputDir, { recursive: true })
             fs.writeFileSync(outputPath, formattedOutput)
-            console.log(`✅ Generated ${fileName}`)
+            console.log(`✅ Generated DAO file: ${fileName}`)
         }
     }
 }

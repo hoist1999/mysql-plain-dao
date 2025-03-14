@@ -37,3 +37,9 @@ config file ignore table list [...]
 config file? exclude some table?
 
 enum to CamelCase? 
+
+generate progress console out
+
+generate model console out
+
+executeGetNumberAsync: return 0

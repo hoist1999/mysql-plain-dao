@@ -16,6 +16,7 @@ export async function generateAndWriteModels(
 ): Promise<void> {
     if (options.generateType === 'model' || options.generateType === 'all') {
         for (const table of tables) {
+            const modelName = toCamelCase(table)
             let output = ''
 
             if (options.writeHeader) {
@@ -38,7 +39,6 @@ export async function generateAndWriteModels(
             const formattedOutput = await formatTypeScript(output)
 
             // Generate file name based on table name
-            const modelName = toCamelCase(table)
             const fileName = `${modelName}.ts`
 
             // Use modelDir if specified, otherwise use outputDir
@@ -52,6 +52,7 @@ export async function generateAndWriteModels(
             fs.mkdirSync(outputDir, { recursive: true })
 
             fs.writeFileSync(outputPath, formattedOutput)
+            console.log(`✅ Generated model file: ${fileName}`)
         }
     }
 }
