@@ -1,53 +1,102 @@
+# Docker Compose 配置文件 - 用于运行测试环境
+# 包含两个服务：MySQL 测试数据库和 Jest 测试容器
+
 services:
-  mysql_test:
+  # MySQL 测试数据库服务
+  mysql-server:
+    # 使用 MariaDB 11.2 版本镜像（与 MySQL 兼容）
     image: mariadb:11.2
-    container_name: mysql_test
+    # 容器名称
+    container_name: mysql-server
+    # 环境变量配置
     environment:
+      # 数据库 root 用户密码
       MARIADB_ROOT_PASSWORD: root
+      # 自动创建的测试数据库名称
       MARIADB_DATABASE: test_db
+    # 数据卷挂载
     volumes:
+      # 将本地 SQL 初始化脚本目录(./src/__tests__/sql)挂载到容器的初始化目录(/docker-entrypoint-initdb.d)
+      # 容器启动时会自动执行该目录下的 SQL 脚本
       - ./src/__tests__/sql:/docker-entrypoint-initdb.d
+    # 启动命令参数：使用传统的 MySQL 密码认证插件（兼容旧版客户端）
     command: --default-authentication-plugin=mysql_native_password
+
+    # 健康检查配置：用于判断数据库是否已就绪
     healthcheck:
+      # 健康检查命令：使用 mariadb-admin ping 检查数据库连接
+      # 相当于执行了 mariadb-admin ping -h localhost -u root -proot 命令
       test: [ "CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      # 检查间隔：每 5 秒检查一次
       interval: 5s
+      # 超时时间：每次检查最多等待 5 秒
       timeout: 5s
+      # 重试次数：最多重试 20 次（总计最多等待 100 秒）
       retries: 20
 
-  jest_test:
+  # Jest 测试服务容器(根据Dockerfile.test自定义的步骤构建镜像)
+  jest-server:
+    # 构建配置：从当前目录构建镜像
     build:
+      # 构建上下文目录
       context: .
+      # 使用的 Dockerfile 文件
       dockerfile: Dockerfile.test
-    container_name: jest_test
+    # 容器名称
+    container_name: jest-server
+    # 工作目录：容器内的应用根目录
     working_dir: /app
+    # 数据卷挂载
     volumes:
+      # 注释掉：如果需要实时同步代码修改，可以取消注释
       # - .:/app
+      # 匿名卷：防止 node_modules 被覆盖（保持容器内的依赖）
       - /app/node_modules
+      # 将日志目录挂载到本地(./docker-logs)，方便查看测试输出和文件列表
       - ./docker-logs:/root/.npm/_logs
+    # 环境变量配置
     environment:
-      - DB_HOST=mysql_test
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=root
-      - DB_DATABASE=test_db
-      - DB_CONNECTION_LIMIT=10
-      - DB_QUEUE_LIMIT=0
-      - DB_WAIT_FOR_CONNECTIONS=true
-      - DEBUG=DAO
-      - NODE_ENV=test-docker
-      - DOCKER_CLIENT_TIMEOUT=300
-      - COMPOSE_HTTP_TIMEOUT=300
-      - WAIT_HOSTS=mysql_test:3306
-      - WAIT_TIMEOUT=60
+      # 数据库连接配置
+      - DB_HOST=mysql-server  # 数据库主机（使用服务名）
+      - DB_PORT=3306        # 数据库端口
+      - DB_USER=root         # 数据库用户名
+      - DB_PASSWORD=root     # 数据库密码
+      - DB_DATABASE=test_db  # 数据库名称
+      # 数据库连接池配置
+      - DB_CONNECTION_LIMIT=10          # 最大连接数
+      - DB_QUEUE_LIMIT=0                # 队列限制（0 表示无限制）
+      - DB_WAIT_FOR_CONNECTIONS=true    # 等待可用连接
+      # 调试和运行环境配置
+      - DEBUG=DAO                        # 调试模式：显示 DAO 相关日志
+      - NODE_ENV=test-docker             # Node.js 运行环境标识
+      # Docker 和 Compose 超时配置（单位：秒）
+      - DOCKER_CLIENT_TIMEOUT=300        # Docker 客户端超时时间
+      - COMPOSE_HTTP_TIMEOUT=300         # Compose HTTP 超时时间
+      # 等待服务就绪配置
+      - WAIT_HOSTS=mysql-server:3306       # 等待 MySQL 服务就绪
+      - WAIT_TIMEOUT=60                  # 等待超时时间（秒）
+      # 字符编码配置：确保中文文件名正确显示
+      - LANG=C.UTF-8                     # 设置语言环境为 UTF-8
+      - LC_ALL=C.UTF-8                   # 设置所有 locale 类别为 UTF-8
+
+    # 容器启动命令
+    # 执行步骤：
+    # 1. 记录容器内文件结构到日志文件（排除 node_modules 和 .git）
+    # 2. 设置管道失败时立即退出（确保测试失败时容器退出码正确）
+    # 3. 运行测试并将输出同时显示在终端和保存到日志文件
     command: >
       bash -c "
         echo 'All files in /app (node_modules is ignored here)' > /root/.npm/_logs/files.log &&
-        tree -a -I 'node_modules|.git' /app >> /root/.npm/_logs/files.log &&
+        tree -aN -I 'node_modules|.git' /app >> /root/.npm/_logs/files.log &&
         set -o pipefail &&
         pnpm test-docker 2>&1 | tee /root/.npm/_logs/jest-output.log
       "
+    # 服务依赖配置
     depends_on:
-      mysql_test:
+      mysql-server:
+        # 等待 MySQL 服务健康检查通过后再启动
         condition: service_healthy
+    # 重启策略：失败时最多重启 3 次
     restart: on-failure:3
+    # 停止优雅期：停止容器时等待 60 秒，让测试完成或清理资源
     stop_grace_period: 60s

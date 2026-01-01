@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# 在本机电脑上初始化测试数据库，用于本地测试
+
 # Load environment variables from .env.test-local
 if [ -f .env.test-local ]; then
     export $(cat .env.test-local | grep -v '^#' | xargs)

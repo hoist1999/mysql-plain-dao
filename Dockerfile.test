@@ -1,18 +1,36 @@
+# 自定义构建镜像，被docker-compose.yml中的jest_test调用
+# 用途：这个镜像用于跑jest单元测试
+
+
+# 基于：node:20-slim 基础镜像
 FROM node:20-slim
 
-# Install pnpm using npm
+# 安装pnpm工具
 RUN npm install -g pnpm
 
-# Install tree command
+# 安装tree命令，用于查看容器内文件结构
 RUN apt-get update && apt-get install -y tree
 
+# 设置工作目录为 /app
+# 作用：后续的所有命令（如安装依赖、运行脚本等）都将在该目录下执行，
+# 保证构建步骤中的路径一致性，便于管理应用文件
 WORKDIR /app
 
-# Copy package files
+# 复制package.json和pnpm-lock.yaml文件到镜像中
+# 这里的 ./ 指的是镜像中的当前工作目录
+# 也就是上面 WORKDIR 命令设置的 /app 目录
+# 参考：https://docs.docker.com/build/cache/optimize/#order-your-layers
+# 根据docker的官方文档指引，先复制package.json和pnpm-lock.yaml文件到镜像中
+# 这样可以利用缓存机制，加快依赖安装速度
 COPY package.json pnpm-lock.yaml* ./
 
-# Install dependencies - This layer will be cached unless package.json or pnpm-lock.yaml changes
-RUN pnpm install --frozen-lockfile
+# type=cache: 用于在构建之间共享缓存（这样pnpm install安装的包可以被缓存）
+# id=pnpm-store: 缓存卷的唯一标识符，用于在构建之间共享缓存
+# target 指的是容器内的目录
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
-# Copy source code - This layer contains frequently changing source code
+# 复制所有项目文件到镜像中
+# 第一个. 表示构建上下文的当前目录（Dockerfile所在的项目根目录）
+# 第二个. 表示镜像中的目标目录（即 WORKDIR 设置的 /app 目录）
 COPY . .
