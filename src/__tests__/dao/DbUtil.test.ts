@@ -69,8 +69,11 @@ describe('DbUtil Tests', () => {
         };
 
         beforeEach(async () => {
-            // Clean up test data only
-            await DbUtil.executeAsync('DELETE FROM user WHERE email = ?', [testUser.email]);
+            // Clean up all test data to avoid conflicts
+            await DbUtil.executeAsync(
+                'DELETE FROM user WHERE email IN (?, ?, ?, ?)',
+                [testUser.email, 'user1@test.com', 'user2@test.com', 'rollback@test.com']
+            );
         });
 
         it('should insert a new user', async () => {

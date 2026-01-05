@@ -1,5 +1,4 @@
 node_modules/
-dist/
 coverage/
 docker-logs/
 .DS_Store
