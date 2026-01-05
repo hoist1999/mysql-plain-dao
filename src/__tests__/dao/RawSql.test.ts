@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import mysql from 'mysql2/promise';
-import { getDbConfigFromEnv } from '../../dao/DbConfigLoader';
+import { getDbConfigFromEnv } from '../../core/database/DbConfigLoader';
 import { User } from '../generated_dao/User';
 
 /**

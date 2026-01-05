@@ -62,18 +62,30 @@ if ! command -v mysql &> /dev/null; then
     exit 1
 fi
 
-# Drop database if exists and create fresh one
-echo "🗑️  Dropping database if exists..."
-execute_mysql_command "DROP DATABASE IF EXISTS \`$DB_DATABASE\`;"
+# Check if database exists
+echo "🔍 Checking if database exists..."
+DB_EXISTS=$(execute_mysql_command "SHOW DATABASES LIKE '$DB_DATABASE';" | grep "$DB_DATABASE" > /dev/null; echo "$?")
 
-echo "🔨 Creating fresh database..."
-execute_mysql_command "CREATE DATABASE \`$DB_DATABASE\`;"
-if [ $? -eq 0 ]; then
-    echo "✅ Database created successfully"
-    import_schema || exit 1
+if [ "$DB_EXISTS" -eq 0 ]; then
+    echo "✅ Database '$DB_DATABASE' already exists"
+    # Check if schema needs to be initialized (if tables don't exist)
+    TABLE_COUNT=$(execute_mysql_command "SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = '$DB_DATABASE';" 2>/dev/null | grep -v "count" | tail -1 | tr -d ' \t')
+    if [ -z "$TABLE_COUNT" ] || [ "$TABLE_COUNT" -eq "0" ]; then
+        echo "📋 Database exists but has no tables, initializing schema..."
+        import_schema || exit 1
+    else
+        echo "✅ Database schema already initialized ($TABLE_COUNT tables found)"
+    fi
 else
-    echo "❌ Failed to create database"
-    exit 1
+    echo "🔨 Creating database '$DB_DATABASE'..."
+    execute_mysql_command "CREATE DATABASE \`$DB_DATABASE\`;"
+    if [ $? -eq 0 ]; then
+        echo "✅ Database created successfully"
+        import_schema || exit 1
+    else
+        echo "❌ Failed to create database"
+        exit 1
+    fi
 fi
 
 echo "✨ Database setup complete"

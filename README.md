@@ -172,6 +172,183 @@ main().catch(console.error);
 | `--dao-dir` | Specific output directory for DAO files |
 | `--no-header` | Skip writing file header comment |
 
+## Database Migrations
+
+The library provides a simple and professional migration system for managing database schema changes. Migrations are executed in transactions, ensuring data safety and rollback capability.
+
+### Quick Start
+
+1. **Create a migration file:**
+```bash
+npx mysql-plain-dao migrate create add_users_table
+```
+
+This creates a SQL file like `migrations/20250105_120000_add_users_table.sql`.
+
+2. **Edit the migration file:**
+```sql
+-- migrations/20250105_120000_add_users_table.sql
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+3. **Run migrations:**
+```bash
+npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+```
+
+### Migration File Format
+
+Migration files are plain SQL files with the naming pattern: `<timestamp>_<name>.sql`
+
+- **Timestamp format**: `YYYYMMDD_HHmmss` (e.g., `20250105_120000`)
+- **Name**: Descriptive name using lowercase letters, numbers, and underscores (e.g., `add_users_table`)
+- **File extension**: `.sql`
+
+Example: `20250105_120000_create_users.sql`
+
+### Migration Commands
+
+#### `migrate up` - Run Pending Migrations
+
+Executes all pending migrations in order:
+
+```bash
+npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+```
+
+**Options:**
+- `-c, --conn <connection>` - Database connection string (required, or use `DAO_CONN` env var)
+- `--migrations-dir <dir>` - Migrations directory (default: `migrations`, or use `DAO_MIGRATIONS_DIR` env var)
+- `--to <name>` - Run migrations up to and including this one
+- `--dry-run` - Show what would be executed without running
+
+**Examples:**
+```bash
+# Run all pending migrations
+npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+
+# Run up to a specific migration
+npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --to 20250105_130000_add_email
+
+# Dry run to see what would be executed
+npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --dry-run
+
+# Use custom migrations directory
+npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --migrations-dir db/migrations
+```
+
+#### `migrate status` - Check Migration Status
+
+Shows which migrations have been applied and which are pending:
+
+```bash
+npx mysql-plain-dao migrate status -c mysql://user:pass@localhost:3306/mydb
+```
+
+**Output example:**
+```
+Migration Status:
+
+✅ 20250105_120000_create_users (applied at 1/5/2025, 12:00:15 PM, duration: 45ms)
+✅ 20250105_130000_add_email (applied at 1/5/2025, 1:00:20 PM, duration: 32ms)
+⏳ 20250105_140000_add_index (pending)
+
+Total: 3 migration(s), 2 applied, 1 pending
+```
+
+**Options:**
+- `-c, --conn <connection>` - Database connection string (required, or use `DAO_CONN` env var)
+- `--migrations-dir <dir>` - Migrations directory (default: `migrations`, or use `DAO_MIGRATIONS_DIR` env var)
+
+#### `migrate create` - Create New Migration
+
+Creates a new migration file with a timestamp prefix:
+
+```bash
+npx mysql-plain-dao migrate create add_users_table
+```
+
+**Options:**
+- `--migrations-dir <dir>` - Migrations directory (default: `migrations`, or use `DAO_MIGRATIONS_DIR` env var)
+
+**Example:**
+```bash
+npx mysql-plain-dao migrate create add_users_table
+# Creates: migrations/20250105_120000_add_users_table.sql
+```
+
+### Migration Features
+
+- **Transaction Safety**: Each migration runs in a transaction. If it fails, all changes are rolled back.
+- **Order Guarantee**: Migrations are executed in filename order (timestamp-based).
+- **Idempotent**: Already applied migrations are automatically skipped.
+- **Multi-statement Support**: Each SQL file can contain multiple statements.
+- **Tracking**: All applied migrations are recorded in a `migrations` table with execution time and duration.
+
+### Migration File Examples
+
+**Creating a table:**
+```sql
+-- migrations/20250105_120000_create_users.sql
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+**Adding a column:**
+```sql
+-- migrations/20250105_130000_add_email_verified.sql
+ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+```
+
+**Creating an index:**
+```sql
+-- migrations/20250105_140000_add_user_index.sql
+CREATE INDEX idx_user_email ON users(email);
+CREATE INDEX idx_user_created_at ON users(created_at);
+```
+
+**Multiple statements:**
+```sql
+-- migrations/20250105_150000_update_schema.sql
+ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+CREATE INDEX idx_user_phone ON users(phone);
+UPDATE users SET phone = '' WHERE phone IS NULL;
+```
+
+### Environment Variables
+
+You can use environment variables to avoid repeating connection strings:
+
+```bash
+# Set connection string
+export DAO_CONN="mysql://user:pass@localhost:3306/mydb"
+
+# Set migrations directory (optional)
+export DAO_MIGRATIONS_DIR="db/migrations"
+
+# Now you can run commands without -c flag
+npx mysql-plain-dao migrate up
+npx mysql-plain-dao migrate status
+```
+
+### Best Practices
+
+1. **Always test migrations** on a development database first
+2. **Use descriptive names** for migration files (e.g., `add_user_email_index` not `migration1`)
+3. **Keep migrations small and focused** - one logical change per migration
+4. **Never modify existing migration files** that have already been applied
+5. **Use transactions** - migrations automatically run in transactions
+6. **Backup your database** before running migrations in production
+
 ## Base DAO Classes
 
 The library provides three base DAO classes for different primary key scenarios:

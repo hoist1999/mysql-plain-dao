@@ -1,8 +1,8 @@
 import { escape, escapeId, format } from "mysql2";
 import { v4 as uuidv4 } from 'uuid';
 import { CommonDao, CommonDaoOption } from "./CommonDao";
-import { DbUtil } from "./DbUtil";
-import type { PlainObject } from "./Types";
+import { DbUtil } from "../database/DbUtil";
+import type { PlainObject } from "../types/Types";
 
 export interface BaseDaoUUIDOption extends CommonDaoOption {
 	uuid_field?: string;

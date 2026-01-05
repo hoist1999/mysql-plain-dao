@@ -1,6 +1,6 @@
 /* tslint:disable */
 
-import { BaseDao } from '../../dao/BaseDao';
+import { BaseDao } from '../../core/dao/BaseDao';
 import type { News, InsertNews } from './News';
 
 export class NewsDao extends BaseDao<News, InsertNews> {

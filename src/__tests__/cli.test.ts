@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { getDbConfigFromEnv } from '../dao/DbConfigLoader';
-import { executeGenerateAsync } from '../generator/generate';
-import { CliOptions, GenerateType } from '../generator/Types';
+import { getDbConfigFromEnv } from '../core/database/DbConfigLoader';
+import { executeGenerateAsync } from '../cli/generator/generate';
+import { CliOptions, GenerateType } from '../cli/generator/Types';
 
 const dbConfig = getDbConfigFromEnv();
 const TEST_TABLE_USER = 'user';

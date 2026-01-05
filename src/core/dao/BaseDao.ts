@@ -1,7 +1,7 @@
 import { escape, escapeId, format } from "mysql2";
 import { CommonDao, CommonDaoOption } from "./CommonDao";
-import { DbUtil } from "./DbUtil";
-import type { PlainObject } from "./Types";
+import { DbUtil } from "../database/DbUtil";
+import type { PlainObject } from "../types/Types";
 
 export interface BaseDaoOption extends CommonDaoOption {
     id_field?: string;

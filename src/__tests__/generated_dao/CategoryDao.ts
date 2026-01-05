@@ -7,7 +7,7 @@
  */
 
 import type { Category, InsertCategory } from './Category';
-import { BaseDao } from '../../dao/BaseDao';
+import { BaseDao } from '../../core/dao/BaseDao';
 export class CategoryDao extends BaseDao<Category, InsertCategory> {
     constructor() {
         super({

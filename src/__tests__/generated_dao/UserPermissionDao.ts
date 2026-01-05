@@ -1,6 +1,6 @@
 /* tslint:disable */
 
-import { BaseDao } from '../../dao/BaseDao';
+import { BaseDao } from '../../core/dao/BaseDao';
 import type { UserPermission, InsertUserPermission } from './UserPermission';
 
 export class UserPermissionDao extends BaseDao<UserPermission, InsertUserPermission> {

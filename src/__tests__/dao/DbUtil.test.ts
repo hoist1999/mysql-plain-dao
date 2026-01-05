@@ -1,7 +1,7 @@
 import crypto from 'crypto';
-import { DbUtil } from '../../dao/DbUtil';
+import { DbUtil } from '../../core/database/DbUtil';
 import type { ResultSetHeader } from 'mysql2';
-import { getDbConfigFromEnv } from '../../dao/DbConfigLoader';
+import { getDbConfigFromEnv } from '../../core/database/DbConfigLoader';
 
 interface User {
     id?: number;

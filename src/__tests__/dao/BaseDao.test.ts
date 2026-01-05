@@ -1,6 +1,6 @@
-import { BaseDao } from "../../dao/BaseDao";
-import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
-import { DbUtil } from '../../dao/DbUtil';
+import { BaseDao } from "../../core/dao/BaseDao";
+import { getDbConfigFromEnv } from "../../core/database/DbConfigLoader";
+import { DbUtil } from '../../core/database/DbUtil';
 import { InsertNews, News, enum_status } from '../generated_dao/News';
 import { NewsDao } from '../generated_dao/NewsDao';
 import { InsertUser, User } from '../generated_dao/User';

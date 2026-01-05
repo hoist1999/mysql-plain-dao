@@ -1,7 +1,7 @@
 /* tslint:disable */
 
 import type { Book, InsertBook } from './Book';
-import { BaseDaoUUID } from '../../dao/BaseDaoUUID';
+import { BaseDaoUUID } from '../../core/dao/BaseDaoUUID';
 
 export class BookDao extends BaseDaoUUID<Book, InsertBook> {
     constructor() {

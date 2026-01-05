@@ -1,8 +1,8 @@
-import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
-import { DbUtil } from '../../dao/DbUtil';
+import { getDbConfigFromEnv } from "../../core/database/DbConfigLoader";
+import { DbUtil } from '../../core/database/DbUtil';
 import { InsertUser, User } from "../generated_dao/User";
 import { UserDao } from "../generated_dao/UserDao";
-import { BaseDaoDoubleID } from './../../dao/BaseDaoDoubleID';
+import { BaseDaoDoubleID } from './../../core/dao/BaseDaoDoubleID';
 
 // Test user table which has both uuid and id as primary key
 describe('UserDao', () => {

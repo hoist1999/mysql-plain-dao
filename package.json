@@ -10,10 +10,15 @@
       "require": "./dist/cjs/index.js",
       "import": "./dist/esm/index.js",
       "types": "./dist/cjs/index.d.ts"
+    },
+    "./migrations": {
+      "require": "./dist/cjs/migrations.js",
+      "import": "./dist/esm/migrations.js",
+      "types": "./dist/cjs/migrations.d.ts"
     }
   },
   "bin": {
-    "mysql-plain-dao": "./dist/cjs/generator/cli.js"
+    "mysql-plain-dao": "./dist/cjs/cli/cli.js"
   },
   "files": [
     "dist"
@@ -29,7 +34,7 @@
     "version:patch": "pnpm version patch",
     "version:minor": "pnpm version minor",
     "version:major": "pnpm version major",
-    "start": "tsx src/generator/cli.ts",
+    "start": "tsx src/cli/cli.ts",
     "release": "bumpp package.json --commit --push --tag"
   },
   "keywords": [

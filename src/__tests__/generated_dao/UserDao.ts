@@ -1,7 +1,7 @@
 /* tslint:disable */
 
-import { BaseDaoDoubleID } from '../../dao/BaseDaoDoubleID';
-import { DbUtil } from '../../dao/DbUtil';
+import { BaseDaoDoubleID } from '../../core/dao/BaseDaoDoubleID';
+import { DbUtil } from '../../core/database/DbUtil';
 import type { InsertUser, User } from './User';
 
 export class UserDao extends BaseDaoDoubleID<User, InsertUser> {

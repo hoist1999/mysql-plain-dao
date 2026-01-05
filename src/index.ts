@@ -1,1 +1,2 @@
-export * from "./dao/index";
+// Main entry point - export core library
+export * from "./core";

@@ -1,6 +1,6 @@
-import { BaseDaoUUID } from '../../dao/BaseDaoUUID';
-import { getDbConfigFromEnv } from "../../dao/DbConfigLoader";
-import { DbUtil } from '../../dao/DbUtil';
+import { BaseDaoUUID } from '../../core/dao/BaseDaoUUID';
+import { getDbConfigFromEnv } from "../../core/database/DbConfigLoader";
+import { DbUtil } from '../../core/database/DbUtil';
 import { Book, InsertBook } from "../generated_dao/Book";
 import { BookDao } from "../generated_dao/BookDao";
 

@@ -1,7 +1,7 @@
 import { format } from "mysql2";
 import { BaseDaoUUID, BaseDaoUUIDOption } from "./BaseDaoUUID";
-import { DbUtil } from "./DbUtil";
-import type { PlainObject } from "./Types";
+import { DbUtil } from "../database/DbUtil";
+import type { PlainObject } from "../types/Types";
 
 export interface BaseDaoDoubleIDOption extends BaseDaoUUIDOption {
 	id_field?: string;

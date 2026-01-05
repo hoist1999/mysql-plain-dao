@@ -1,7 +1,7 @@
 import { escapeId, format } from "mysql2";
-import { DbUtil } from "./DbUtil";
-import { SqlUtil } from "./SqlUtil";
-import type { PagerParams, ParasType, PlainObject } from "./Types";
+import { DbUtil } from "../database/DbUtil";
+import { SqlUtil } from "../sql/SqlUtil";
+import type { PagerParams, ParasType, PlainObject } from "../types/Types";
 
 export interface CommonDaoOption {
     table_name: string;
