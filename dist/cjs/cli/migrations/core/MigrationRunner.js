@@ -5,9 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runMigrations = runMigrations;
 exports.getMigrationStatus = getMigrationStatus;
-const DbUtil_1 = require("../../../core/database/DbUtil");
 const MigrationTable_1 = require("./MigrationTable");
 const MigrationLoader_1 = require("./MigrationLoader");
+const DbConfigLoader_1 = require("../../../core/database/DbConfigLoader");
+const promise_1 = __importDefault(require("mysql2/promise"));
 const debug_1 = __importDefault(require("debug"));
 const debug = (0, debug_1.default)('Migrations');
 /**
@@ -17,6 +18,7 @@ const debug = (0, debug_1.default)('Migrations');
  * @param options - Migration execution options
  * @param options.to - Optional. Run migrations up to and including this migration name (e.g., '20250105_120000_create_users')
  * @param options.dryRun - Optional. If true, only show what would be executed without actually running migrations
+ * @param options.dbConfig - Optional. Database configuration. If not provided, will be loaded from environment variables.
  * @returns Promise that resolves when all migrations are completed
  * @throws Error if a migration fails or if the specified migration name in --to option is not found
  */
@@ -65,11 +67,31 @@ async function runMigrations(migrationsDir, options = {}) {
             if (!sql) {
                 throw new Error('Migration file is empty');
             }
-            // Execute SQL within a transaction
-            // Use query() instead of execute() to support multi-statement SQL
-            await DbUtil_1.DbUtil.withTransaction(async (conn) => {
-                await conn.query(sql);
-            });
+            // Execute SQL with support for multiple statements
+            // Use a dedicated connection with multipleStatements enabled
+            const dbConfig = options.dbConfig || (0, DbConfigLoader_1.getDbConfigFromEnv)();
+            // Create connection config with multipleStatements enabled
+            // PoolOptions extends ConnectionOptions, so we can use it directly
+            // but we need to remove pool-specific options
+            const { connectionLimit, queueLimit, waitForConnections, ...baseConfig } = dbConfig;
+            const connectionConfig = {
+                ...baseConfig,
+                multipleStatements: true, // Enable multiple statement execution
+            };
+            const connection = await promise_1.default.createConnection(connectionConfig);
+            try {
+                await connection.beginTransaction();
+                // Execute SQL with multiple statements support
+                await connection.query(sql);
+                await connection.commit();
+            }
+            catch (error) {
+                await connection.rollback();
+                throw error;
+            }
+            finally {
+                await connection.end();
+            }
             // Record migration as applied
             const durationMs = Date.now() - startTime;
             const appliedAt = new Date();

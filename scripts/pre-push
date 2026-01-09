@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Pre-push hook: 在推送前构建项目，确保 dist 文件夹中的代码是最新的
+#
+
+echo "🔨 正在推送前构建项目..."
+pnpm build
+
+if [ $? -ne 0 ]; then
+  echo "❌ 构建失败。推送已取消。"
+  exit 1
+fi
+
+echo "✅ 构建成功。继续推送..."
+exit 0

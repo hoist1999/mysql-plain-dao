@@ -2,6 +2,7 @@ import { Command, Option } from 'commander';
 import { DbUtil } from '../../../core/database/DbUtil';
 import { getMigrationStatus } from '../core/MigrationRunner';
 import { parseConnectionString } from '../utils/connectionParser';
+import { getDbConfigFromEnv } from '../../../core/database/DbConfigLoader';
 import { resolve } from 'path';
 
 export function createMigrateStatusCommand(): Command {
@@ -10,9 +11,8 @@ export function createMigrateStatusCommand(): Command {
   command
     .description('Show migration status')
     .addOption(
-      new Option('-c, --conn <connection>', 'Database connection string (MySQL)')
+      new Option('-c, --conn <connection>', 'Database connection string (MySQL). If not provided, will use DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE from .env file')
         .env('DAO_CONN')
-        .makeOptionMandatory()
     )
     .addOption(
       new Option('--migrations-dir <dir>', 'Migrations directory')
@@ -22,7 +22,26 @@ export function createMigrateStatusCommand(): Command {
     .action(async (options) => {
       try {
         // Initialize database connection
-        const dbConfig = parseConnectionString(options.conn);
+        // If connection string is provided, use it; otherwise, try to load from .env file
+        let dbConfig;
+        if (options.conn) {
+          // Use connection string if provided
+          dbConfig = parseConnectionString(options.conn);
+        } else {
+          // Try to load from environment variables (DB_HOST, DB_USER, etc.)
+          try {
+            dbConfig = getDbConfigFromEnv();
+          } catch (error: any) {
+            throw new Error(
+              'Database connection not provided. Please either:\n' +
+              '  1. Use -c/--conn option with connection string: mysql://user:pass@host:port/database\n' +
+              '  2. Or set DAO_CONN environment variable\n' +
+              '  3. Or set DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE in .env file\n' +
+              `Error: ${error.message}`
+            );
+          }
+        }
+        
         DbUtil.initialize(dbConfig);
 
         // Resolve migrations directory
