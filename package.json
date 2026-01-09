@@ -35,9 +35,7 @@
     "version:minor": "pnpm version minor",
     "version:major": "pnpm version major",
     "start": "tsx src/cli/cli.ts",
-    "release": "bumpp package.json --commit --push --tag",
-    "install-hooks": "sh scripts/install-hooks.sh",
-    "postinstall": "pnpm install-hooks"
+    "release": "bumpp package.json --commit --push --tag"
   },
   "keywords": [
     "typescript",
