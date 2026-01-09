@@ -1,31 +1,31 @@
 # mysql-plain-dao
 
-A TypeScript-first tool for generating data model objects from existing MySQL databases and executing native SQL queries with type-safe DAO operations. It also provides a library of utilities to simplify database access operations.
+一个 TypeScript 优先的工具，用于从现有 MySQL 数据库生成数据模型对象，并通过类型安全的 DAO 操作执行原生 SQL 查询。它还提供了一个实用程序库来简化数据库访问操作。
 
 
-## Warning
-> ⚠️ **Warning**: This package is still under active development and the API is not yet stable. Please do not use it in production environments.
+## 警告
+> ⚠️ **警告**: 此包仍在积极开发中，API 尚未稳定。请不要在生产环境中使用。
 
-## Why Choose Native SQL?
+## 为什么选择原生 SQL？
 
-In an era of AI-generated code, writing SQL queries has become easier than ever - AI can help generate queries while you maintain control over performance and debugging. This tool helps you maintain type safety while leveraging the full power of SQL.
+在 AI 生成代码的时代，编写 SQL 查询变得比以往任何时候都更容易 - AI 可以帮助生成查询，同时您保持对性能和调试的控制。此工具帮助您在利用 SQL 的全部功能的同时保持类型安全。
 
 
-## Quick Start
+## 快速开始
 
-### 1. Installation
+### 1. 安装
 
 ```bash
-# Using npm
+# 使用 npm
 npm install mysql-plain-dao
 
-# Or using pnpm (recommended)
+# 或使用 pnpm（推荐）
 pnpm add mysql-plain-dao
 ```
 
-### 2. Prepare MySQL Database
+### 2. 准备 MySQL 数据库
 
-First, create a MySQL database and tables. Here's an example of creating a `user` table:
+首先，创建一个 MySQL 数据库和表。以下是一个创建 `user` 表示例：
 
 ```sql
 CREATE DATABASE IF NOT EXISTS mydb;
@@ -44,15 +44,15 @@ CREATE TABLE user (
 );
 ```
 
-### 3. Generate Model and DAO using Command Line Tool
+### 3. 使用命令行工具生成 Model 和 DAO
 
-Generate TypeScript interfaces and DAOs from your existing MySQL database tables:
+从现有的 MySQL 数据库表生成 TypeScript 接口和 DAO：
 
 ```bash
 npx mysql-plain-dao -c mysql://user:pass@localhost:3306/mydb -t user -o src/dao/
 ```
 
-Generated files example:
+生成的文件示例：
 
 ```typescript
 // src/dao/User.ts
@@ -83,11 +83,11 @@ export class UserDao extends BaseDao<User, InsertUser> {
         });
     }
     
-    // Place your custom database access methods here
+    // 在此处放置您的自定义数据库访问方法
 }
 ```
 
-### 4. Here's how to use the generated DAO class for CRUD operations:
+### 4. 以下是如何使用生成的 DAO 类进行 CRUD 操作：
 
 ```typescript
 // src/user-crud-example.ts
@@ -95,7 +95,7 @@ import { DbUtil } from 'mysql-plain-dao';
 import { UserDao } from './dao/UserDao';
 import type { InsertUser } from './dao/User';
 
-// Database configuration
+// 数据库配置
 const DB_CONFIG = {
     host: 'localhost',
     port: 3306,
@@ -106,13 +106,13 @@ const DB_CONFIG = {
 
 async function main() {
     try {
-        // Initialize database connection
+        // 初始化数据库连接
         await DbUtil.initialize(DB_CONFIG);
-        console.log('Database connection initialized successfully');
+        console.log('数据库连接初始化成功');
 
         const userDao = new UserDao();
 
-        // Create: Insert a new user
+        // 创建: 插入新用户
         const newUser: InsertUser = {
             username: 'john_doe',
             email: 'john@example.com',
@@ -122,13 +122,13 @@ async function main() {
             is_active: true
         };
         const userId = await userDao.insertAsync(newUser);
-        console.log('Created user with ID:', userId);
+        console.log('创建用户，ID:', userId);
 
-        // Read: Get user by ID
+        // 读取: 根据 ID 获取用户
         const user = await userDao.getByIdAsync(userId);
-        console.log('Retrieved user:', user);
+        console.log('检索到的用户:', user);
 
-        // Update: Modify user data
+        // 更新: 修改用户数据
         if (user) {
             const updatedUser = {
                 ...user,
@@ -136,41 +136,41 @@ async function main() {
                 last_name: 'Doe Jr'
             };
             await userDao.updateAsync(updatedUser);
-            console.log('User updated successfully');
+            console.log('用户更新成功');
         }
 
-        // List all data
+        // 列出所有数据
         const activeUsers = await userDao.getListAsync();
-        console.log('Active users:', activeUsers);
+        console.log('活跃用户:', activeUsers);
 
-        // Delete
+        // 删除
         await userDao.deleteByIdAsync(userId);
-        console.log('User deleted successfully');
+        console.log('用户删除成功');
     } catch (error) {
-        console.error('Error occurred:', error);
+        console.error('发生错误:', error);
         process.exit(1);
     } finally {
-        // Always close the connection when done
+        // 完成后始终关闭连接
         await DbUtil.endPoolAsync();
-        console.log('Database connection closed');
+        console.log('数据库连接已关闭');
     }
 }
 
-// Execute the example
+// 执行示例
 main().catch(console.error);
 ```
 
-## CLI Options
+## CLI 选项
 
-| Option | Description |
-|--------|-------------|
-| `-c, --conn` | Database connection string (MySQL) |
-| `-t, --table` | Table name(s) to generate interfaces for |
-| `-o, --output` | Output directory for generated files |
-| `-g, --generate` | Generation type (model, dao, or all) |
-| `--model-dir` | Specific output directory for model files |
-| `--dao-dir` | Specific output directory for DAO files |
-| `--no-header` | Skip writing file header comment |
+| 选项 | 说明 |
+|------|------|
+| `-c, --conn` | 数据库连接字符串（MySQL） |
+| `-t, --table` | 要生成接口的表名 |
+| `-o, --output` | 生成文件的输出目录 |
+| `-g, --generate` | 生成类型（model、dao 或 all） |
+| `--model-dir` | 模型文件的特定输出目录 |
+| `--dao-dir` | DAO 文件的特定输出目录 |
+| `--no-header` | 跳过写入文件头注释 |
 
 ## 数据库迁移
 
@@ -423,24 +423,24 @@ npx mysql-plain-dao migrate status
 5. **使用事务** - 迁移自动在事务中运行
 6. **在生产环境运行迁移前备份数据库**
 
-## Base DAO Classes
+## 基础 DAO 类
 
-The library provides three base DAO classes for different primary key scenarios:
+该库为不同的主键场景提供了三个基础 DAO 类：
 
-| Base Class | Description | Built-in CRUD Methods |
-|------------|-------------|----------------------|
-| `BaseDao<T>` | For tables with auto-increment ID | • `insertAsync()` - Create new records<br>• `getByIdAsync()` - Retrieve by ID<br>• `updateAsync()` - Update records<br>• `deleteByIdAsync()` - Delete by ID<br>• `getListAsync()` - List all records |
-| `BaseDaoUUID<T>` | For tables with UUID primary key | • `insertAsync()` - Create new records<br>• `getByUuidAsync()` - Retrieve by UUID<br>• `updateAsync()` - Update records<br>• `deleteByUuidAsync()` - Delete by UUID<br>• `getListAsync()` - List all records |
-| `BaseDaoDoubleID<T>` | For tables with both ID and UUID | • `insertAsync()` - Create new records<br>• `getByIdAsync()` - Retrieve by ID<br>• `getByUuidAsync()` - Retrieve by UUID<br>• `updateAsync()` - Update records<br>• `deleteByIdAsync()` - Delete by ID<br>• `deleteByUuidAsync()` - Delete by UUID<br>• `getListAsync()` - List all records |
+| 基础类 | 说明 | 内置 CRUD 方法 |
+|--------|------|---------------|
+| `BaseDao<T>` | 用于自增 ID 的表 | • `insertAsync()` - 创建新记录<br>• `getByIdAsync()` - 根据 ID 检索<br>• `updateAsync()` - 更新记录<br>• `deleteByIdAsync()` - 根据 ID 删除<br>• `getListAsync()` - 列出所有记录 |
+| `BaseDaoUUID<T>` | 用于 UUID 主键的表 | • `insertAsync()` - 创建新记录<br>• `getByUuidAsync()` - 根据 UUID 检索<br>• `updateAsync()` - 更新记录<br>• `deleteByUuidAsync()` - 根据 UUID 删除<br>• `getListAsync()` - 列出所有记录 |
+| `BaseDaoDoubleID<T>` | 用于同时具有 ID 和 UUID 的表 | • `insertAsync()` - 创建新记录<br>• `getByIdAsync()` - 根据 ID 检索<br>• `getByUuidAsync()` - 根据 UUID 检索<br>• `updateAsync()` - 更新记录<br>• `deleteByIdAsync()` - 根据 ID 删除<br>• `deleteByUuidAsync()` - 根据 UUID 删除<br>• `getListAsync()` - 列出所有记录 |
 
-The generator automatically selects the appropriate base class based on your table structure.
+生成器会根据您的表结构自动选择合适的基础类。
 
-## Writing Custom DAO Methods
+## 编写自定义 DAO 方法
 
-Each generated DAO class comes with built-in CRUD operations:
+每个生成的 DAO 类都带有内置的 CRUD 操作：
 
 
-Need more specific database operations? You can add custom methods to your DAO class. Here's how to extend the `UserDao` class with custom SQL queries:
+需要更具体的数据库操作？您可以在 DAO 类中添加自定义方法。以下是如何使用自定义 SQL 查询扩展 `UserDao` 类：
 
    ```typescript
 // src/dao/UserDao.ts
@@ -456,12 +456,12 @@ export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
         });
     }
 
-    // You can add your own methods below
+    // 您可以在下面添加自己的方法
 
 
-    // Custom methods below
+    // 下面的自定义方法
 
-    /** Find active users who logged in within the last n days */
+    /** 查找在过去 n 天内登录的活跃用户 */
     async findActiveUsersAsync(): Promise<User[]> {
         const sql = `
             SELECT * FROM user 
@@ -473,7 +473,7 @@ export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
         return await DbUtil.executeGetListAsync<User>(sql);
     }
 
-    /** Update user status and record the change time */
+    /** 更新用户状态并记录更改时间 */
     async updateUserStatusAsync(userId: number, isActive: boolean): Promise<number> {
         const sql = `
             UPDATE user 
@@ -484,7 +484,7 @@ export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
         return await DbUtil.executeUpdateAsync(sql, [isActive, userId]);
     }
 
-    /** Get user statistics by registration date */
+    /** 根据注册日期获取用户统计信息 */
     async getUserStatsByDateAsync(startDate: Date, endDate: Date)
         : Promise<Array<{ date: string; count: number }>> {
         const sql = `
@@ -503,7 +503,7 @@ export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
         return result;
     }
 
-    /** Search users with complex conditions */
+    /** 使用复杂条件搜索用户 */
     async searchUsersAsync(params: {
         keyword?: string;
         isActive?: boolean;
@@ -543,23 +543,23 @@ export class UserDao extends BaseDaoDoubleID<User, InsertUser> {
 }
 ```
 
-Usage example:
+使用示例：
 
 ```typescript
 const userDao = new UserDao();
 
-// Find active users
+// 查找活跃用户
 const recentUsers = await userDao.findActiveUsersAsync();
 
-// Update user status
+// 更新用户状态
 await userDao.updateUserStatusAsync(123, false);
 
-// Get user registration statistics for the last month
+// 获取上个月的用户注册统计信息
 const startDate = new Date();
 startDate.setMonth(startDate.getMonth() - 1);
 const stats = await userDao.getUserStatsByDateAsync(startDate, new Date());
 
-// Search users with complex conditions
+// 使用复杂条件搜索用户
 const searchResults = await userDao.searchUsersAsync({
     keyword: 'user',
     isActive: true,
@@ -568,17 +568,17 @@ const searchResults = await userDao.searchUsersAsync({
 });
 ```
 
-## SQL Injection Prevention
+## SQL 注入防护
 
-SQL injection is one of the most common web application vulnerabilities. Here's how to write secure SQL queries using this library:
+SQL 注入是最常见的 Web 应用程序漏洞之一。以下是如何使用此库编写安全的 SQL 查询：
 
-### ❌ Unsafe Example (DO NOT USE)
+### ❌ 不安全示例（请勿使用）
 
 ```typescript
-// DON'T DO THIS - Vulnerable to SQL injection
+// 不要这样做 - 容易受到 SQL 注入攻击
 class UnsafeUserDao {
     async searchUsers(keyword: string, isActive: boolean) {
-        // DANGEROUS: Direct string concatenation
+        // 危险：直接字符串拼接
         const sql = `
             SELECT * FROM user 
             WHERE username LIKE '%${keyword}%'
@@ -588,15 +588,15 @@ class UnsafeUserDao {
     }
 }
 
-// This could be exploited:
+// 这可能会被利用：
 await userDao.searchUsers("' OR '1'='1'; DROP TABLE user; --", true);
 ```
 
-### ✅ Safe Example (Recommended)
+### ✅ 安全示例（推荐）
 
 ```typescript
 class UserDao extends BaseDaoDoubleID<User, InsertUser> {
-    // Method 1: Using parameterized queries (Recommended)
+    // 方法 1: 使用参数化查询（推荐）
     async searchUsers(keyword: string, isActive: boolean) {
         const sql = `
             SELECT * FROM user 
@@ -606,7 +606,7 @@ class UserDao extends BaseDaoDoubleID<User, InsertUser> {
         return await DbUtil.executeGetListAsync(sql, [`%${keyword}%`, isActive]);
     }
 
-    // Method 2: Using mysql2's format function
+    // 方法 2: 使用 mysql2 的 format 函数
     async searchUsersWithFormat(keyword: string, isActive: boolean) {
         const sql = format(
             'SELECT * FROM user WHERE username LIKE ? AND is_active = ?',
@@ -617,18 +617,18 @@ class UserDao extends BaseDaoDoubleID<User, InsertUser> {
 }
 ```
 
-### Key Security Points
+### 关键安全要点
 
-1. **Never** concatenate user input directly into SQL strings
-2. **Always** use parameterized queries with `?` placeholders
-3. **Consider** using `mysql2`'s `format` or `escape` functions for complex queries
-4. **Validate** and sanitize input before using it in queries
-5. **Follow** the built-in DAO methods pattern of using parameterized queries instead of string concatenation
+1. **永远不要**直接将用户输入拼接到 SQL 字符串中
+2. **始终**使用带有 `?` 占位符的参数化查询
+3. **考虑**对复杂查询使用 `mysql2` 的 `format` 或 `escape` 函数
+4. **在使用查询之前验证和清理输入**
+5. **遵循**内置 DAO 方法使用参数化查询而不是字符串拼接的模式
 
 
-## Inspired by
+## 灵感来源
 
-This project was inspired by [schemats](https://github.com/SweetIQ/schemats), which is no longer actively maintained. Some code has been adapted from their implementation while the codebase has been rewritten in TypeScript and enhanced with modern features and additional functionality.
+此项目受到 [schemats](https://github.com/SweetIQ/schemats) 的启发，该项目已不再积极维护。部分代码已从其实现中改编，同时代码库已用 TypeScript 重写，并增强了现代功能和附加功能。
 
 
 ## License

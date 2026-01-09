@@ -1,66 +1,66 @@
-# Command Line Interface Guide
+# 命令行界面指南
 
-This document describes the command line interface for mysql-plain-dao.
+本文档描述了 mysql-plain-dao 的命令行界面。
 
-## Common Usage Examples
+## 常用使用示例
 
-Here are some common examples of how to use the CLI:
+以下是一些使用 CLI 的常见示例：
 
-### 1. Generate interface for a single table:
+### 1. 为单个表生成接口：
 ```bash
 npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/
 ```
 
-* `-c mysql://user:pass@localhost:3306/dbname` indicates database connection string
-* `-t users` indicates the table name to be generated
-* `-o src/models/` indicates the output directory for generated files
-* By default, this will generate both model and DAO files
+* `-c mysql://user:pass@localhost:3306/dbname` 表示数据库连接字符串
+* `-t users` 表示要生成的表名
+* `-o src/models/` 表示生成文件的输出目录
+* 默认情况下，这将生成 model 和 DAO 文件
 
-### 2. Generate interfaces for multiple tables:
+### 2. 为多个表生成接口：
 ```bash
 npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/
 ```
 
-Here, `-t users -t products` means generating files for these two tables at the same time.
+这里，`-t users -t products` 表示同时为这两个表生成文件。
 
-### 3. Generate only model files:
+### 3. 仅生成模型文件：
 ```bash
 npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -g model -o src/models/
 ```
 
-* `-g model` specifies to only generate model/interface files
-* You can also use `-g dao` for only DAO files, or `-g all` (default) for both
+* `-g model` 指定仅生成模型/接口文件
+* 您也可以使用 `-g dao` 仅生成 DAO 文件，或使用 `-g all`（默认）生成两者
 
-### 4. Generate files with custom directories:
+### 4. 使用自定义目录生成文件：
 ```bash
 npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users \
   --model-dir src/models/ \
   --dao-dir src/dao/
 ```
 
-* `--model-dir` specifies output directory for model files
-* `--dao-dir` specifies output directory for DAO files
-* These override the `-o` option for their respective file types
+* `--model-dir` 指定模型文件的输出目录
+* `--dao-dir` 指定 DAO 文件的输出目录
+* 这些会覆盖各自文件类型的 `-o` 选项
 
-## Command Line Options
+## 命令行选项
 
-| Option | Alias | Description | Required | Default |
-|--------|-------|-------------|----------|---------|
-| --conn | -c | MySQL connection string | Yes | - |
-| --table | -t | Table name(s) to generate interfaces for | Yes | - |
-| --schema | -s | Database schema name | No | - |
-| --output | -o | Output TypeScript file path | Yes | - |
-| --camelCase | -C | Convert column names to camelCase | No | false |
-| --noHeader | - | Skip writing file header comment | No | false |
-| --config | - | Path to configuration file | No | schemats.json |
+| 选项 | 别名 | 说明 | 必需 | 默认值 |
+|------|------|------|------|--------|
+| --conn | -c | MySQL 连接字符串 | 是 | - |
+| --table | -t | 要生成接口的表名 | 是 | - |
+| --schema | -s | 数据库架构名称 | 否 | - |
+| --output | -o | 输出 TypeScript 文件路径 | 是 | - |
+| --camelCase | -C | 将列名转换为 camelCase | 否 | false |
+| --noHeader | - | 跳过写入文件头注释 | 否 | false |
+| --config | - | 配置文件路径 | 否 | schemats.json |
 
 
 
-## Using Configuration File
+## 使用配置文件
 
-All command line options can be specified in a configuration file. This is particularly useful when you need to reuse the same settings multiple times or manage complex configurations.
+所有命令行选项都可以在配置文件中指定。当您需要多次重用相同设置或管理复杂配置时，这特别有用。
 
-For example, create a `schemas.json` configuration file in the project root directory:
+例如，在项目根目录中创建一个 `schemas.json` 配置文件：
 
 ```json
 {
@@ -71,39 +71,39 @@ For example, create a `schemas.json` configuration file in the project root dire
 }
 ```
 
-Then run the command line tool:
+然后运行命令行工具：
 
 ```bash
 npx mysql-plain-dao --config schemats.json
 ```
 
-This will have the same effect as running the command with individual options:
+这与使用单独选项运行命令具有相同的效果：
 
 ```bash
 npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/ -C
 ```
 
 
-## Using Environment Variables
+## 使用环境变量
 
-Environment variables provide a secure and flexible way to configure the tool, especially useful in:
-- CI/CD pipelines where sensitive information should not be exposed in command line arguments
-- Docker containers and cloud environments
-- Development workflows where you switch between different configurations
+环境变量提供了一种安全且灵活的配置工具的方式，特别适用于：
+- CI/CD 流水线，其中敏感信息不应在命令行参数中暴露
+- Docker 容器和云环境
+- 在不同配置之间切换的开发工作流
 
-All options can be set using environment variables with the `DAO_` prefix:
+所有选项都可以使用带有 `DAO_` 前缀的环境变量来设置：
 
-| Environment Variable | Description | Default |
-|---------------------|-------------|---------|
-| DAO_CONN | Database connection string | - |
-| DAO_TABLE | Table name(s) to generate interfaces for | - |
-| DAO_OUTPUT | Output directory for generated files | - |
-| DAO_GENERATE | Generation type (model, dao, or all) | all |
-| DAO_MODEL_DIR | Output directory for model files | Same as OUTPUT |
-| DAO_DAO_DIR | Output directory for DAO files | Same as OUTPUT |
-| DAO_NO_HEADER | Skip writing file header comment | false |
+| 环境变量 | 说明 | 默认值 |
+|---------|------|--------|
+| DAO_CONN | 数据库连接字符串 | - |
+| DAO_TABLE | 要生成接口的表名 | - |
+| DAO_OUTPUT | 生成文件的输出目录 | - |
+| DAO_GENERATE | 生成类型（model、dao 或 all） | all |
+| DAO_MODEL_DIR | 模型文件的输出目录 | 与 OUTPUT 相同 |
+| DAO_DAO_DIR | DAO 文件的输出目录 | 与 OUTPUT 相同 |
+| DAO_NO_HEADER | 跳过写入文件头注释 | false |
 
-### Example
+### 示例
 
 ```bash
 DAO_CONN=mysql://user:pass@localhost:3306/dbname \
@@ -113,7 +113,7 @@ DAO_GENERATE=all \
 npx mysql-plain-dao
 ```
 
-This approach is equivalent to using command line arguments but offers better security and maintainability.
+这种方法等同于使用命令行参数，但提供了更好的安全性和可维护性。
 
 ## 迁移命令
 
