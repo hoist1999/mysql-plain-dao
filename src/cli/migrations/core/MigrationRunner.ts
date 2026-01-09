@@ -2,6 +2,8 @@ import { DbUtil } from '../../../core/database/DbUtil';
 import type { MigrationFile } from './Types';
 import { ensureMigrationsTable, getAppliedMigrations, recordMigrationApplied } from './MigrationTable';
 import { loadMigrationFiles, loadMigrationSQL } from './MigrationLoader';
+import { getDbConfigFromEnv } from '../../../core/database/DbConfigLoader';
+import mysql from 'mysql2/promise';
 import debug_func from 'debug';
 
 const debug = debug_func('Migrations');
@@ -13,6 +15,7 @@ const debug = debug_func('Migrations');
  * @param options - Migration execution options
  * @param options.to - Optional. Run migrations up to and including this migration name (e.g., '20250105_120000_create_users')
  * @param options.dryRun - Optional. If true, only show what would be executed without actually running migrations
+ * @param options.dbConfig - Optional. Database configuration. If not provided, will be loaded from environment variables.
  * @returns Promise that resolves when all migrations are completed
  * @throws Error if a migration fails or if the specified migration name in --to option is not found
  */
@@ -21,6 +24,7 @@ export async function runMigrations(
   options: {
     to?: string;
     dryRun?: boolean;
+    dbConfig?: mysql.PoolOptions;
   } = {}
 ): Promise<void> {
   // Ensure migrations table exists
@@ -80,11 +84,34 @@ export async function runMigrations(
         throw new Error('Migration file is empty');
       }
 
-      // Execute SQL within a transaction
-      // Use query() instead of execute() to support multi-statement SQL
-      await DbUtil.withTransaction(async (conn) => {
-        await conn.query(sql);
-      });
+      // Execute SQL with support for multiple statements
+      // Use a dedicated connection with multipleStatements enabled
+      const dbConfig = options.dbConfig || getDbConfigFromEnv();
+      
+      // Create connection config with multipleStatements enabled
+      // PoolOptions extends ConnectionOptions, so we can use it directly
+      // but we need to remove pool-specific options
+      const { connectionLimit, queueLimit, waitForConnections, ...baseConfig } = dbConfig;
+      const connectionConfig = {
+        ...baseConfig,
+        multipleStatements: true, // Enable multiple statement execution
+      };
+
+      const connection = await mysql.createConnection(connectionConfig);
+
+      try {
+        await connection.beginTransaction();
+        
+        // Execute SQL with multiple statements support
+        await connection.query(sql);
+        
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        await connection.end();
+      }
 
       // Record migration as applied
       const durationMs = Date.now() - startTime;

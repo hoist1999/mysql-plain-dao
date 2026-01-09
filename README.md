@@ -172,20 +172,20 @@ main().catch(console.error);
 | `--dao-dir` | Specific output directory for DAO files |
 | `--no-header` | Skip writing file header comment |
 
-## Database Migrations
+## 数据库迁移
 
-The library provides a simple and professional migration system for managing database schema changes. Migrations are executed in transactions, ensuring data safety and rollback capability.
+该库提供了一个简单且专业的迁移系统，用于管理数据库架构变更。迁移在事务中执行，确保数据安全和回滚能力。
 
-### Quick Start
+### 快速开始
 
-1. **Create a migration file:**
+1. **创建迁移文件:**
 ```bash
 npx mysql-plain-dao migrate create add_users_table
 ```
 
-This creates a SQL file like `migrations/20250105_120000_add_users_table.sql`.
+这将创建一个 SQL 文件，例如 `migrations/20250105_120000_add_users_table.sql`。
 
-2. **Edit the migration file:**
+2. **编辑迁移文件:**
 ```sql
 -- migrations/20250105_120000_add_users_table.sql
 CREATE TABLE users (
@@ -196,61 +196,112 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-3. **Run migrations:**
+3. **运行迁移:**
 ```bash
+# 方式 1: 使用连接字符串
 npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+
+# 方式 2: 使用 .env 文件（无需 -c 参数）
+# 创建 .env 文件，内容如下:
+# DB_HOST=127.0.0.1
+# DB_USER=root
+# DB_PASSWORD=root888
+# DB_DATABASE=mydb
+npx mysql-plain-dao migrate up
 ```
 
-### Migration File Format
+### 迁移文件格式
 
-Migration files are plain SQL files with the naming pattern: `<timestamp>_<name>.sql`
+迁移文件是纯 SQL 文件，命名格式为: `<timestamp>_<name>.sql`
 
-- **Timestamp format**: `YYYYMMDD_HHmmss` (e.g., `20250105_120000`)
-- **Name**: Descriptive name using lowercase letters, numbers, and underscores (e.g., `add_users_table`)
-- **File extension**: `.sql`
+- **时间戳格式**: `YYYYMMDD_HHmmss` (例如: `20250105_120000`)
+- **名称**: 使用小写字母、数字和下划线的描述性名称 (例如: `add_users_table`)
+- **文件扩展名**: `.sql`
 
-Example: `20250105_120000_create_users.sql`
+示例: `20250105_120000_create_users.sql`
 
-### Migration Commands
+### 迁移命令
 
-#### `migrate up` - Run Pending Migrations
+#### `migrate up` - 运行待处理的迁移
 
-Executes all pending migrations in order:
+按顺序执行所有待处理的迁移:
 
 ```bash
+# 使用连接字符串
 npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+
+# 使用 .env 文件（无需 -c 参数）
+npx mysql-plain-dao migrate up
 ```
 
-**Options:**
-- `-c, --conn <connection>` - Database connection string (required, or use `DAO_CONN` env var)
-- `--migrations-dir <dir>` - Migrations directory (default: `migrations`, or use `DAO_MIGRATIONS_DIR` env var)
-- `--to <name>` - Run migrations up to and including this one
-- `--dry-run` - Show what would be executed without running
+**选项:**
+- `-c, --conn <connection>` - 数据库连接字符串（可选，可使用 `DAO_CONN` 环境变量或 `.env` 文件）
+- `--migrations-dir <dir>` - 迁移文件目录（默认: `migrations`，或使用 `DAO_MIGRATIONS_DIR` 环境变量）
+- `--to <name>` - 运行到指定迁移（包含该迁移）
+- `--dry-run` - 显示将要执行的内容但不实际运行
 
-**Examples:**
+**数据库配置选项:**
+
+`migrate up` 命令支持三种配置数据库连接的方式（按优先级排序）:
+
+1. **通过命令行参数提供连接字符串:**
+   ```bash
+   npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+   ```
+
+2. **通过环境变量提供连接字符串:**
+   ```bash
+   export DAO_CONN="mysql://user:pass@localhost:3306/mydb"
+   npx mysql-plain-dao migrate up
+   ```
+
+3. **通过 .env 文件提供单独的数据库设置:**
+   ```bash
+   # 在项目根目录创建 .env 文件:
+   DB_HOST=127.0.0.1
+   DB_USER=root
+   DB_PASSWORD=root888
+   DB_DATABASE=mydb
+   # 可选:
+   DB_PORT=3306
+   
+   # 然后无需 -c 参数即可运行:
+   npx mysql-plain-dao migrate up
+   ```
+
+**示例:**
 ```bash
-# Run all pending migrations
+# 运行所有待处理的迁移（使用连接字符串）
 npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
 
-# Run up to a specific migration
+# 运行所有待处理的迁移（使用 .env 文件）
+npx mysql-plain-dao migrate up
+
+# 运行到指定迁移
 npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --to 20250105_130000_add_email
+# 或使用 .env 文件:
+npx mysql-plain-dao migrate up --to 20250105_130000_add_email
 
-# Dry run to see what would be executed
+# 干运行，查看将要执行的内容
 npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --dry-run
+# 或使用 .env 文件:
+npx mysql-plain-dao migrate up --dry-run
 
-# Use custom migrations directory
+# 使用自定义迁移目录
 npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --migrations-dir db/migrations
+# 或使用 .env 文件:
+npx mysql-plain-dao migrate up --migrations-dir db/migrations
 ```
 
-#### `migrate status` - Check Migration Status
+#### `migrate status` - 查看迁移状态
 
-Shows which migrations have been applied and which are pending:
+显示哪些迁移已应用，哪些待处理:
 
 ```bash
 npx mysql-plain-dao migrate status -c mysql://user:pass@localhost:3306/mydb
 ```
 
-**Output example:**
+**输出示例:**
 ```
 Migration Status:
 
@@ -261,38 +312,38 @@ Migration Status:
 Total: 3 migration(s), 2 applied, 1 pending
 ```
 
-**Options:**
-- `-c, --conn <connection>` - Database connection string (required, or use `DAO_CONN` env var)
-- `--migrations-dir <dir>` - Migrations directory (default: `migrations`, or use `DAO_MIGRATIONS_DIR` env var)
+**选项:**
+- `-c, --conn <connection>` - 数据库连接字符串（必需，或使用 `DAO_CONN` 环境变量）
+- `--migrations-dir <dir>` - 迁移文件目录（默认: `migrations`，或使用 `DAO_MIGRATIONS_DIR` 环境变量）
 
-#### `migrate create` - Create New Migration
+#### `migrate create` - 创建新迁移
 
-Creates a new migration file with a timestamp prefix:
+创建一个带时间戳前缀的新迁移文件:
 
 ```bash
 npx mysql-plain-dao migrate create add_users_table
 ```
 
-**Options:**
-- `--migrations-dir <dir>` - Migrations directory (default: `migrations`, or use `DAO_MIGRATIONS_DIR` env var)
+**选项:**
+- `--migrations-dir <dir>` - 迁移文件目录（默认: `migrations`，或使用 `DAO_MIGRATIONS_DIR` 环境变量）
 
-**Example:**
+**示例:**
 ```bash
 npx mysql-plain-dao migrate create add_users_table
-# Creates: migrations/20250105_120000_add_users_table.sql
+# 创建: migrations/20250105_120000_add_users_table.sql
 ```
 
-### Migration Features
+### 迁移特性
 
-- **Transaction Safety**: Each migration runs in a transaction. If it fails, all changes are rolled back.
-- **Order Guarantee**: Migrations are executed in filename order (timestamp-based).
-- **Idempotent**: Already applied migrations are automatically skipped.
-- **Multi-statement Support**: Each SQL file can contain multiple statements.
-- **Tracking**: All applied migrations are recorded in a `migrations` table with execution time and duration.
+- **事务安全**: 每个迁移在事务中运行。如果失败，所有更改都会回滚。
+- **顺序保证**: 迁移按文件名顺序执行（基于时间戳）。
+- **幂等性**: 已应用的迁移会自动跳过。
+- **多语句支持**: 每个 SQL 文件可以包含多个用分号分隔的语句。
+- **跟踪记录**: 所有已应用的迁移都会记录在 `migrations` 表中，包含执行时间和持续时间。
 
-### Migration File Examples
+### 迁移文件示例
 
-**Creating a table:**
+**创建表:**
 ```sql
 -- migrations/20250105_120000_create_users.sql
 CREATE TABLE users (
@@ -303,20 +354,20 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-**Adding a column:**
+**添加列:**
 ```sql
 -- migrations/20250105_130000_add_email_verified.sql
 ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE;
 ```
 
-**Creating an index:**
+**创建索引:**
 ```sql
 -- migrations/20250105_140000_add_user_index.sql
 CREATE INDEX idx_user_email ON users(email);
 CREATE INDEX idx_user_created_at ON users(created_at);
 ```
 
-**Multiple statements:**
+**多条语句:**
 ```sql
 -- migrations/20250105_150000_update_schema.sql
 ALTER TABLE users ADD COLUMN phone VARCHAR(20);
@@ -324,30 +375,53 @@ CREATE INDEX idx_user_phone ON users(phone);
 UPDATE users SET phone = '' WHERE phone IS NULL;
 ```
 
-### Environment Variables
+### 环境变量
 
-You can use environment variables to avoid repeating connection strings:
+您可以使用环境变量来避免重复输入连接字符串:
 
+**方式 1: 使用 DAO_CONN（连接字符串格式）:**
 ```bash
-# Set connection string
+# 设置连接字符串
 export DAO_CONN="mysql://user:pass@localhost:3306/mydb"
 
-# Set migrations directory (optional)
+# 设置迁移目录（可选）
 export DAO_MIGRATIONS_DIR="db/migrations"
 
-# Now you can run commands without -c flag
+# 现在可以无需 -c 参数运行命令
 npx mysql-plain-dao migrate up
 npx mysql-plain-dao migrate status
 ```
 
-### Best Practices
+**方式 2: 使用 .env 文件，提供单独的数据库设置:**
+```bash
+# 在项目根目录创建 .env 文件:
+DB_HOST=127.0.0.1
+DB_USER=root
+DB_PASSWORD=root888
+DB_DATABASE=mydb
+DB_PORT=3306
 
-1. **Always test migrations** on a development database first
-2. **Use descriptive names** for migration files (e.g., `add_user_email_index` not `migration1`)
-3. **Keep migrations small and focused** - one logical change per migration
-4. **Never modify existing migration files** that have already been applied
-5. **Use transactions** - migrations automatically run in transactions
-6. **Backup your database** before running migrations in production
+# 可选: 设置迁移目录
+DAO_MIGRATIONS_DIR=db/migrations
+
+# 现在可以无需 -c 参数运行命令
+npx mysql-plain-dao migrate up
+npx mysql-plain-dao migrate status
+```
+
+`.env` 文件会根据 `NODE_ENV` 自动加载:
+- `NODE_ENV=development`: 加载 `.env`, `.env.development`, `.env.development.local`
+- `NODE_ENV=test`: 加载 `.env`, `.env.test`, `.env.test.local`
+- `NODE_ENV=production`: 加载 `.env`, `.env.production`, `.env.production.local`
+
+### 最佳实践
+
+1. **始终先在开发数据库上测试迁移**
+2. **使用描述性名称**命名迁移文件（例如: `add_user_email_index` 而不是 `migration1`）
+3. **保持迁移小而专注** - 每个迁移只做一个逻辑变更
+4. **永远不要修改**已经应用过的现有迁移文件
+5. **使用事务** - 迁移自动在事务中运行
+6. **在生产环境运行迁移前备份数据库**
 
 ## Base DAO Classes
 

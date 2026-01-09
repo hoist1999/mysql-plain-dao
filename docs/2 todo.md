@@ -1,3 +1,7 @@
+sql命令含有；多行的时候的问题
+
+up命令--conn参数有点问题
+
 cli env OK
 
 id or uuid custom? OK

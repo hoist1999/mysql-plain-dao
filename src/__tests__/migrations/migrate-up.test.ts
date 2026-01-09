@@ -245,5 +245,100 @@ INVALID SQL STATEMENT;`
     const applied2 = await getAppliedMigrations();
     expect(applied2.length).toBe(2); // Should still be 2, not 4
   });
+
+  it('should support multiple SQL statements separated by semicolons', async () => {
+    // Create test migration file with multiple statements
+    const migration1 = `20250101_120000_create_multiple_tables.sql`;
+
+    await writeFile(
+      join(testMigrationsDir, migration1),
+      `CREATE TABLE test_users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE test_products (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL
+);
+
+CREATE INDEX idx_users_name ON test_users(name);
+CREATE INDEX idx_products_name ON test_products(name);`
+    );
+
+    // Run migrations
+    await runMigrations(testMigrationsDir);
+
+    // Check that migration was recorded
+    const applied = await getAppliedMigrations();
+    expect(applied.length).toBe(1);
+    expect(applied[0].name).toBe('20250101_120000_create_multiple_tables');
+
+    // Check that all tables were created
+    const [usersColumns] = await DbUtil.queryAsync('SHOW COLUMNS FROM test_users');
+    const usersColumnsArray = Array.isArray(usersColumns) ? usersColumns.map((c: any) => c.Field) : [];
+    expect(usersColumnsArray).toContain('id');
+    expect(usersColumnsArray).toContain('name');
+
+    const [productsColumns] = await DbUtil.queryAsync('SHOW COLUMNS FROM test_products');
+    const productsColumnsArray = Array.isArray(productsColumns) ? productsColumns.map((c: any) => c.Field) : [];
+    expect(productsColumnsArray).toContain('id');
+    expect(productsColumnsArray).toContain('name');
+    expect(productsColumnsArray).toContain('price');
+
+    // Check that indexes were created
+    const [usersIndexes] = await DbUtil.queryAsync(
+      "SHOW INDEXES FROM test_users WHERE Key_name = 'idx_users_name'"
+    );
+    expect(Array.isArray(usersIndexes) ? usersIndexes.length : 0).toBeGreaterThan(0);
+
+    const [productsIndexes] = await DbUtil.queryAsync(
+      "SHOW INDEXES FROM test_products WHERE Key_name = 'idx_products_name'"
+    );
+    expect(Array.isArray(productsIndexes) ? productsIndexes.length : 0).toBeGreaterThan(0);
+  });
+
+  it('should rollback all statements if any statement in multi-statement migration fails', async () => {
+    try {
+      // First, create a table for testing DML rollback
+      await DbUtil.executeAsync(`
+        CREATE TABLE IF NOT EXISTS test_users (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          name VARCHAR(255) NOT NULL
+        )
+      `);
+
+      // Create test migration file with multiple DML statements where one will fail
+      // Note: DDL statements (CREATE TABLE) are auto-committed in MySQL and cannot be rolled back
+      // So we test with DML statements (INSERT) which can be rolled back
+      const migration1 = `20250101_120000_failing_multi_statement.sql`;
+
+      await writeFile(
+        join(testMigrationsDir, migration1),
+        `INSERT INTO test_users (name) VALUES ('User 1');
+
+-- This will fail - invalid SQL
+INVALID SQL STATEMENT;
+
+INSERT INTO test_users (name) VALUES ('User 2');`
+      );
+
+      // Run migrations - should fail and rollback
+      await expect(runMigrations(testMigrationsDir)).rejects.toThrow();
+
+      // Check that migration was not recorded
+      const applied = await getAppliedMigrations();
+      expect(applied.length).toBe(0);
+
+      // Check that no data was inserted (DML rollback should have occurred)
+      const [users] = await DbUtil.queryAsync('SELECT * FROM test_users');
+      const usersArray = Array.isArray(users) ? users : [];
+      expect(usersArray.length).toBe(0);
+    } finally {
+      // Clean up - ensure this runs even if test fails
+      await DbUtil.executeAsync('DROP TABLE IF EXISTS test_users').catch(() => {});
+    }
+  });
 });
 
