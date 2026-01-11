@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import type { ParasType } from "../types/Types";
+export type Connection = mysql.Connection;
 export declare class DatabaseError extends Error {
     sql?: string | undefined;
     params?: ParasType | undefined;
