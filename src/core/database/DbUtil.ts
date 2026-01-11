@@ -3,6 +3,9 @@ import _ from "lodash";
 import mysql from "mysql2/promise";
 import type { ParasType } from "../types/Types";
 
+// Re-export Connection type for users to avoid version conflicts
+export type Connection = mysql.Connection;
+
 const debug = debug_func("DAO");
 
 export class DatabaseError extends Error {
