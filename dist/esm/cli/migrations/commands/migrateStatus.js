@@ -4,8 +4,8 @@ import { getMigrationStatus } from '../core/MigrationRunner';
 import { parseConnectionString } from '../utils/connectionParser';
 import { getDbConfigFromEnv } from '../../../core/database/DbConfigLoader';
 import { resolve } from 'path';
-export function createMigrateStatusCommand() {
-    const command = new Command('status');
+export function createMigrateStatusCommand(commandName = 'migrate-status') {
+    const command = new Command(commandName);
     command
         .description('Show migration status')
         .addOption(new Option('-c, --conn <connection>', 'Database connection string (MySQL). If not provided, will use DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE from .env file')

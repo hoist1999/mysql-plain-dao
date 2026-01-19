@@ -7,8 +7,8 @@ const MigrationRunner_1 = require("../core/MigrationRunner");
 const connectionParser_1 = require("../utils/connectionParser");
 const DbConfigLoader_1 = require("../../../core/database/DbConfigLoader");
 const path_1 = require("path");
-function createMigrateUpCommand() {
-    const command = new commander_1.Command('up');
+function createMigrateUpCommand(commandName = 'migrate-up') {
+    const command = new commander_1.Command(commandName);
     command
         .description('Run pending migrations')
         .addOption(new commander_1.Option('-c, --conn <connection>', 'Database connection string (MySQL). If not provided, will use DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE from .env file')

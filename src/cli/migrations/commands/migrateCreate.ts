@@ -12,8 +12,8 @@ const MIGRATION_TEMPLATE = `-- Your migration SQL here
 -- );
 `;
 
-export function createMigrateCreateCommand(): Command {
-  const command = new Command('create');
+export function createMigrateCreateCommand(commandName: string = 'migrate-create'): Command {
+  const command = new Command(commandName);
 
   command
     .description('Create a new migration file')

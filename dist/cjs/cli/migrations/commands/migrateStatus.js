@@ -7,8 +7,8 @@ const MigrationRunner_1 = require("../core/MigrationRunner");
 const connectionParser_1 = require("../utils/connectionParser");
 const DbConfigLoader_1 = require("../../../core/database/DbConfigLoader");
 const path_1 = require("path");
-function createMigrateStatusCommand() {
-    const command = new commander_1.Command('status');
+function createMigrateStatusCommand(commandName = 'migrate-status') {
+    const command = new commander_1.Command(commandName);
     command
         .description('Show migration status')
         .addOption(new commander_1.Option('-c, --conn <connection>', 'Database connection string (MySQL). If not provided, will use DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE from .env file')

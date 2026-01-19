@@ -8,7 +8,7 @@
 
 ### 1. 为单个表生成接口：
 ```bash
-npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o src/models/
 ```
 
 * `-c mysql://user:pass@localhost:3306/dbname` 表示数据库连接字符串
@@ -18,14 +18,14 @@ npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o src/m
 
 ### 2. 为多个表生成接口：
 ```bash
-npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/
 ```
 
 这里，`-t users -t products` 表示同时为这两个表生成文件。
 
 ### 3. 仅生成模型文件：
 ```bash
-npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -g model -o src/models/
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -g model -o src/models/
 ```
 
 * `-g model` 指定仅生成模型/接口文件
@@ -33,7 +33,7 @@ npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -g model
 
 ### 4. 使用自定义目录生成文件：
 ```bash
-npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users \
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users \
   --model-dir src/models/ \
   --dao-dir src/dao/
 ```
@@ -74,13 +74,13 @@ npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users \
 然后运行命令行工具：
 
 ```bash
-npx mysql-plain-dao --config schemats.json
+npx mysql-plain-dao generate --config schemats.json
 ```
 
 这与使用单独选项运行命令具有相同的效果：
 
 ```bash
-npx mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/ -C
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -t products -o src/models/ -C
 ```
 
 
@@ -110,7 +110,7 @@ DAO_CONN=mysql://user:pass@localhost:3306/dbname \
 DAO_TABLE=users,products \
 DAO_OUTPUT=src/models/ \
 DAO_GENERATE=all \
-npx mysql-plain-dao
+npx mysql-plain-dao generate
 ```
 
 这种方法等同于使用命令行参数，但提供了更好的安全性和可维护性。
@@ -119,23 +119,23 @@ npx mysql-plain-dao
 
 CLI 提供了用于管理数据库架构变更的迁移命令。
 
-### `migrate up` - 运行待处理的迁移
+### `migrate-up` - 运行待处理的迁移
 
 按顺序执行所有待处理的迁移。
 
 **数据库配置:**
 
-`migrate up` 命令支持三种配置数据库连接的方式（按优先级排序）:
+`migrate-up` 命令支持三种配置数据库连接的方式（按优先级排序）:
 
 1. **通过命令行参数提供连接字符串:**
    ```bash
-   npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+   npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb
    ```
 
 2. **通过环境变量提供连接字符串:**
    ```bash
    export DAO_CONN="mysql://user:pass@localhost:3306/mydb"
-   npx mysql-plain-dao migrate up
+   npx mysql-plain-dao migrate-up
    ```
 
 3. **通过 .env 文件提供单独的数据库设置:**
@@ -148,7 +148,7 @@ CLI 提供了用于管理数据库架构变更的迁移命令。
    DB_PORT=3306
    
    # 然后无需 -c 参数即可运行:
-   npx mysql-plain-dao migrate up
+   npx mysql-plain-dao migrate-up
    ```
 
 **选项:**
@@ -160,22 +160,22 @@ CLI 提供了用于管理数据库架构变更的迁移命令。
 **示例:**
 ```bash
 # 运行所有待处理的迁移（使用连接字符串）
-npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb
 
 # 运行所有待处理的迁移（使用 .env 文件）
-npx mysql-plain-dao migrate up
+npx mysql-plain-dao migrate-up
 
 # 运行到指定迁移
-npx mysql-plain-dao migrate up --to 20250105_130000_add_email
+npx mysql-plain-dao migrate-up --to 20250105_130000_add_email
 
 # 干运行，查看将要执行的内容
-npx mysql-plain-dao migrate up --dry-run
+npx mysql-plain-dao migrate-up --dry-run
 
 # 使用自定义迁移目录
-npx mysql-plain-dao migrate up --migrations-dir db/migrations
+npx mysql-plain-dao migrate-up --migrations-dir db/migrations
 ```
 
-### `migrate status` - 查看迁移状态
+### `migrate-status` - 查看迁移状态
 
 显示哪些迁移已应用，哪些待处理。
 
@@ -185,10 +185,10 @@ npx mysql-plain-dao migrate up --migrations-dir db/migrations
 
 **示例:**
 ```bash
-npx mysql-plain-dao migrate status
+npx mysql-plain-dao migrate-status
 ```
 
-### `migrate create` - 创建新迁移
+### `migrate-create` - 创建新迁移
 
 创建一个带时间戳前缀的新迁移文件。
 
@@ -197,7 +197,7 @@ npx mysql-plain-dao migrate status
 
 **示例:**
 ```bash
-npx mysql-plain-dao migrate create add_users_table
+npx mysql-plain-dao migrate-create add_users_table
 # 创建: migrations/20250105_120000_add_users_table.sql
 ```
 

@@ -4,8 +4,8 @@ import { runMigrations } from '../core/MigrationRunner';
 import { parseConnectionString } from '../utils/connectionParser';
 import { getDbConfigFromEnv } from '../../../core/database/DbConfigLoader';
 import { resolve } from 'path';
-export function createMigrateUpCommand() {
-    const command = new Command('up');
+export function createMigrateUpCommand(commandName = 'migrate-up') {
+    const command = new Command(commandName);
     command
         .description('Run pending migrations')
         .addOption(new Option('-c, --conn <connection>', 'Database connection string (MySQL). If not provided, will use DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE from .env file')

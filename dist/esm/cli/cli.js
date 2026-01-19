@@ -11,9 +11,9 @@
  *   npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o ./src/dao/
  *
  *   # Migration commands
- *   npx mysql-plain-dao migrate create add_users_table
- *   npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/dbname
- *   npx mysql-plain-dao migrate status -c mysql://user:pass@localhost:3306/dbname
+ *   npx mysql-plain-dao migrate-create add_users_table
+ *   npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/dbname
+ *   npx mysql-plain-dao migrate-status -c mysql://user:pass@localhost:3306/dbname
  */
 import { Command, Option } from 'commander';
 import { executeGenerateAsync } from './generator/generate';
@@ -53,7 +53,7 @@ catch (e) {
         .name('mysql-plain-dao')
         .description('MySQL Plain DAO - Generate TypeScript models, DAO, and manage database migrations')
         .version(version);
-    // Generate command (backward compatible)
+    // Generate command
     const generateCommand = new Command('generate')
         .alias('gen')
         .description('Generate TypeScript models and DAO from MySQL database tables')
@@ -76,7 +76,7 @@ catch (e) {
         .env('DAO_DAO_DIR'))
         .action(async (options) => {
         try {
-            // 如果环境变量中的 TABLE 是逗号分隔的字符串，需要转换为数组
+            // If DAO_TABLE comes from env as comma-separated, normalize to array.
             const tables = Array.isArray(options.table)
                 ? options.table
                 : options.table?.split(',').filter(Boolean) || [];
@@ -111,76 +111,27 @@ catch (e) {
             process.exit(1);
         }
     });
-    // Migrate command
-    const migrateCommand = new Command('migrate')
-        .description('Database migration commands')
-        .addCommand(createMigrateUpCommand())
-        .addCommand(createMigrateStatusCommand())
-        .addCommand(createMigrateCreateCommand());
     // Add commands to program
     program.addCommand(generateCommand);
+    program.addCommand(createMigrateUpCommand('migrate-up'));
+    program.addCommand(createMigrateStatusCommand('migrate-status'));
+    program.addCommand(createMigrateCreateCommand('migrate-create'));
+    // Deprecated (backward compatible) migrate group.
+    const migrateCommand = new Command('migrate')
+        .description('[DEPRECATED] Use migrate-up / migrate-status / migrate-create instead')
+        .addCommand(createMigrateUpCommand('up'))
+        .addCommand(createMigrateStatusCommand('status'))
+        .addCommand(createMigrateCreateCommand('create'));
     program.addCommand(migrateCommand);
-    // Backward compatibility: if no command specified, treat as generate
-    program
-        .addOption(new Option('-c, --conn <connection>', 'Database connection string (MySQL)')
-        .env('DAO_CONN'))
-        .addOption(new Option('-t, --table <tables...>', 'table name(s) to generate interfaces for')
-        .env('DAO_TABLE'))
-        .addOption(new Option('-o, --output <dir>', 'output directory for generated files')
-        .env('DAO_OUTPUT'))
-        .addOption(new Option('-g, --generate <type>', 'generation type (model, dao, or all)')
-        .env('DAO_GENERATE')
-        .default('all')
-        .choices(['model', 'dao', 'all']))
-        .addOption(new Option('--no-header', 'skip writing file header comment')
-        .env('DAO_NO_HEADER'))
-        .addOption(new Option('--model-dir <dir>', 'output directory for model files (overrides -o for models)')
-        .env('DAO_MODEL_DIR'))
-        .addOption(new Option('--dao-dir <dir>', 'output directory for DAO files (overrides -o for DAOs)')
-        .env('DAO_DAO_DIR'))
-        .action(async (options) => {
-        // If no subcommand and connection is provided, run generate
-        if (options.conn) {
-            try {
-                const tables = Array.isArray(options.table)
-                    ? options.table
-                    : options.table?.split(',').filter(Boolean) || [];
-                const cliOptions = {
-                    writeHeader: options.header !== false,
-                    generateType: options.generate,
-                    outputDir: options.output,
-                    modelDir: options.modelDir || '',
-                    daoDir: options.daoDir || '',
-                };
-                await executeGenerateAsync(options.conn, tables, cliOptions);
-                console.log('✨ Generation completed successfully!');
-                process.exit(0);
-            }
-            catch (e) {
-                console.error('\n❌ Generation failed:');
-                if (e.message) {
-                    console.error('\n' + e.message);
-                    console.error(e.stack);
-                }
-                else {
-                    console.error('An unexpected error occurred during generation.');
-                }
-                process.exit(1);
-            }
-        }
-    });
     program.addHelpText('after', `
 Examples:
-  # Generate models and DAO (backward compatible)
-  $ mysql-plain-dao -c mysql://user:pass@localhost:3306/dbname -t users -o ./src/dao/
-  
   # Generate using subcommand
   $ mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o ./src/dao/
   
   # Migration commands
-  $ mysql-plain-dao migrate create add_users_table
-  $ mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/dbname
-  $ mysql-plain-dao migrate status -c mysql://user:pass@localhost:3306/dbname
+  $ mysql-plain-dao migrate-create add_users_table
+  $ mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/dbname
+  $ mysql-plain-dao migrate-status -c mysql://user:pass@localhost:3306/dbname
 
 Environment Variables:
   DAO_CONN        Database connection string

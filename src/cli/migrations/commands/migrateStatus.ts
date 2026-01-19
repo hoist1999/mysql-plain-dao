@@ -5,8 +5,8 @@ import { parseConnectionString } from '../utils/connectionParser';
 import { getDbConfigFromEnv } from '../../../core/database/DbConfigLoader';
 import { resolve } from 'path';
 
-export function createMigrateStatusCommand(): Command {
-  const command = new Command('status');
+export function createMigrateStatusCommand(commandName: string = 'migrate-status'): Command {
+  const command = new Command(commandName);
 
   command
     .description('Show migration status')

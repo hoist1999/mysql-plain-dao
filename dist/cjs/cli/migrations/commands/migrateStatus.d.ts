@@ -1,2 +1,2 @@
 import { Command } from 'commander';
-export declare function createMigrateStatusCommand(): Command;
+export declare function createMigrateStatusCommand(commandName?: string): Command;

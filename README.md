@@ -49,7 +49,7 @@ CREATE TABLE user (
 从现有的 MySQL 数据库表生成 TypeScript 接口和 DAO：
 
 ```bash
-npx mysql-plain-dao -c mysql://user:pass@localhost:3306/mydb -t user -o src/dao/
+npx mysql-plain-dao generate -c mysql://user:pass@localhost:3306/mydb -t user -o src/dao/
 ```
 
 生成的文件示例：
@@ -180,7 +180,7 @@ main().catch(console.error);
 
 1. **创建迁移文件:**
 ```bash
-npx mysql-plain-dao migrate create add_users_table
+npx mysql-plain-dao migrate-create add_users_table
 ```
 
 这将创建一个 SQL 文件，例如 `migrations/20250105_120000_add_users_table.sql`。
@@ -199,7 +199,7 @@ CREATE TABLE users (
 3. **运行迁移:**
 ```bash
 # 方式 1: 使用连接字符串
-npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb
 
 # 方式 2: 使用 .env 文件（无需 -c 参数）
 # 创建 .env 文件，内容如下:
@@ -207,7 +207,7 @@ npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
 # DB_USER=root
 # DB_PASSWORD=root888
 # DB_DATABASE=mydb
-npx mysql-plain-dao migrate up
+npx mysql-plain-dao migrate-up
 ```
 
 ### 迁移文件格式
@@ -222,16 +222,16 @@ npx mysql-plain-dao migrate up
 
 ### 迁移命令
 
-#### `migrate up` - 运行待处理的迁移
+#### `migrate-up` - 运行待处理的迁移
 
 按顺序执行所有待处理的迁移:
 
 ```bash
 # 使用连接字符串
-npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb
 
 # 使用 .env 文件（无需 -c 参数）
-npx mysql-plain-dao migrate up
+npx mysql-plain-dao migrate-up
 ```
 
 **选项:**
@@ -242,17 +242,17 @@ npx mysql-plain-dao migrate up
 
 **数据库配置选项:**
 
-`migrate up` 命令支持三种配置数据库连接的方式（按优先级排序）:
+`migrate-up` 命令支持三种配置数据库连接的方式（按优先级排序）:
 
 1. **通过命令行参数提供连接字符串:**
    ```bash
-   npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+   npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb
    ```
 
 2. **通过环境变量提供连接字符串:**
    ```bash
    export DAO_CONN="mysql://user:pass@localhost:3306/mydb"
-   npx mysql-plain-dao migrate up
+   npx mysql-plain-dao migrate-up
    ```
 
 3. **通过 .env 文件提供单独的数据库设置:**
@@ -266,39 +266,39 @@ npx mysql-plain-dao migrate up
    DB_PORT=3306
    
    # 然后无需 -c 参数即可运行:
-   npx mysql-plain-dao migrate up
+   npx mysql-plain-dao migrate-up
    ```
 
 **示例:**
 ```bash
 # 运行所有待处理的迁移（使用连接字符串）
-npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb
+npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb
 
 # 运行所有待处理的迁移（使用 .env 文件）
-npx mysql-plain-dao migrate up
+npx mysql-plain-dao migrate-up
 
 # 运行到指定迁移
-npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --to 20250105_130000_add_email
+npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb --to 20250105_130000_add_email
 # 或使用 .env 文件:
-npx mysql-plain-dao migrate up --to 20250105_130000_add_email
+npx mysql-plain-dao migrate-up --to 20250105_130000_add_email
 
 # 干运行，查看将要执行的内容
-npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --dry-run
+npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb --dry-run
 # 或使用 .env 文件:
-npx mysql-plain-dao migrate up --dry-run
+npx mysql-plain-dao migrate-up --dry-run
 
 # 使用自定义迁移目录
-npx mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/mydb --migrations-dir db/migrations
+npx mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/mydb --migrations-dir db/migrations
 # 或使用 .env 文件:
-npx mysql-plain-dao migrate up --migrations-dir db/migrations
+npx mysql-plain-dao migrate-up --migrations-dir db/migrations
 ```
 
-#### `migrate status` - 查看迁移状态
+#### `migrate-status` - 查看迁移状态
 
 显示哪些迁移已应用，哪些待处理:
 
 ```bash
-npx mysql-plain-dao migrate status -c mysql://user:pass@localhost:3306/mydb
+npx mysql-plain-dao migrate-status -c mysql://user:pass@localhost:3306/mydb
 ```
 
 **输出示例:**
@@ -316,12 +316,12 @@ Total: 3 migration(s), 2 applied, 1 pending
 - `-c, --conn <connection>` - 数据库连接字符串（必需，或使用 `DAO_CONN` 环境变量）
 - `--migrations-dir <dir>` - 迁移文件目录（默认: `migrations`，或使用 `DAO_MIGRATIONS_DIR` 环境变量）
 
-#### `migrate create` - 创建新迁移
+#### `migrate-create` - 创建新迁移
 
 创建一个带时间戳前缀的新迁移文件:
 
 ```bash
-npx mysql-plain-dao migrate create add_users_table
+npx mysql-plain-dao migrate-create add_users_table
 ```
 
 **选项:**
@@ -329,7 +329,7 @@ npx mysql-plain-dao migrate create add_users_table
 
 **示例:**
 ```bash
-npx mysql-plain-dao migrate create add_users_table
+npx mysql-plain-dao migrate-create add_users_table
 # 创建: migrations/20250105_120000_add_users_table.sql
 ```
 
@@ -388,8 +388,8 @@ export DAO_CONN="mysql://user:pass@localhost:3306/mydb"
 export DAO_MIGRATIONS_DIR="db/migrations"
 
 # 现在可以无需 -c 参数运行命令
-npx mysql-plain-dao migrate up
-npx mysql-plain-dao migrate status
+npx mysql-plain-dao migrate-up
+npx mysql-plain-dao migrate-status
 ```
 
 **方式 2: 使用 .env 文件，提供单独的数据库设置:**
@@ -405,8 +405,8 @@ DB_PORT=3306
 DAO_MIGRATIONS_DIR=db/migrations
 
 # 现在可以无需 -c 参数运行命令
-npx mysql-plain-dao migrate up
-npx mysql-plain-dao migrate status
+npx mysql-plain-dao migrate-up
+npx mysql-plain-dao migrate-status
 ```
 
 `.env` 文件会根据 `NODE_ENV` 自动加载:

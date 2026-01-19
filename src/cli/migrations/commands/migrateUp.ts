@@ -5,8 +5,8 @@ import { parseConnectionString } from '../utils/connectionParser';
 import { getDbConfigFromEnv } from '../../../core/database/DbConfigLoader';
 import { resolve } from 'path';
 
-export function createMigrateUpCommand(): Command {
-  const command = new Command('up');
+export function createMigrateUpCommand(commandName: string = 'migrate-up'): Command {
+  const command = new Command(commandName);
 
   command
     .description('Run pending migrations')

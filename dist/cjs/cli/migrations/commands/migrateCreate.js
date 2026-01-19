@@ -13,8 +13,8 @@ const MIGRATION_TEMPLATE = `-- Your migration SQL here
 --   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 -- );
 `;
-function createMigrateCreateCommand() {
-    const command = new commander_1.Command('create');
+function createMigrateCreateCommand(commandName = 'migrate-create') {
+    const command = new commander_1.Command(commandName);
     command
         .description('Create a new migration file')
         .argument('<name>', 'Migration name (e.g., add_users_table)')
