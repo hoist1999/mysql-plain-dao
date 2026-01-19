@@ -125,13 +125,20 @@ catch (e) {
     program.addCommand(migrateCommand);
     program.addHelpText('after', `
 Examples:
-  # Generate using subcommand
+  # Generate models and DAO
   $ mysql-plain-dao generate -c mysql://user:pass@localhost:3306/dbname -t users -o ./src/dao/
+  $ mysql-plain-dao gen -c mysql://user:pass@localhost:3306/dbname -t users -o ./src/dao/
   
-  # Migration commands
+  # Migration commands (preferred)
   $ mysql-plain-dao migrate-create add_users_table
   $ mysql-plain-dao migrate-up -c mysql://user:pass@localhost:3306/dbname
   $ mysql-plain-dao migrate-status -c mysql://user:pass@localhost:3306/dbname
+
+Deprecated:
+  # Deprecated migrate group (still supported for now)
+  $ mysql-plain-dao migrate create add_users_table
+  $ mysql-plain-dao migrate up -c mysql://user:pass@localhost:3306/dbname
+  $ mysql-plain-dao migrate status -c mysql://user:pass@localhost:3306/dbname
 
 Environment Variables:
   DAO_CONN        Database connection string
