@@ -1,10 +1,22 @@
 import { escapeId, format } from "mysql2";
 import { OrderBy } from "../types/Types";
-/** Utility class for constructing SQL statements
- */
+/** SQL 语句构建工具类 */
 export class SqlUtil {
     static like(field, condition_value) {
         return format(`${escapeId(field)} LIKE ?`, ["%" + condition_value + "%"]);
+    }
+    /**
+     * 构建 IN 查询条件的 SQL 片段
+     * @param field 字段名，将被自动转义以防止 SQL 注入
+     * @param condition_values 查询值，可以是以下类型：
+     *   - string[] | number[]：字符串或数字数组
+     *   - string | number：单个字符串或数字
+     */
+    static in(field, condition_values) {
+        const params = Array.isArray(condition_values)
+            ? condition_values
+            : [condition_values];
+        return format(`${escapeId(field)} IN (${params.map(() => "?").join(",")})`, params);
     }
     static equal(field, condition_value) {
         return format(`${escapeId(field)} = ?`, [condition_value]);
@@ -13,9 +25,9 @@ export class SqlUtil {
         return format(`${escapeId(field)} != ?`, [condition_value]);
     }
     /**
-     * Get LIMIT clause for pagination
-     * @param current Current page number (starting from 1)
-     * @param pageSize Number of items per page
+     * 构建分页 LIMIT 子句（基于页码）
+     * @param current 当前页码（从 1 开始）
+     * @param pageSize 每页条数
      */
     static limitPager(current, pageSize) {
         const currentInt = typeof current === "string" ? parseInt(current) : current;
@@ -25,9 +37,9 @@ export class SqlUtil {
         return pager_sql;
     }
     /**
-     * Get LIMIT clause
-     * @param start Starting row index (starting from 0)
-     * @param length Number of rows to return
+     * 构建 LIMIT 子句（基于起始位置）
+     * @param start 起始行索引（从 0 开始）
+     * @param length 返回行数
      */
     static limit(start, length) {
         const startInt = typeof start === "string" ? parseInt(start) : start;
@@ -35,7 +47,7 @@ export class SqlUtil {
         let pager_sql = format(` LIMIT ?,?`, [startInt, lengthInt]);
         return pager_sql;
     }
-    // Get ORDER BY clause
+    // 构建 ORDER BY 子句
     static orderBy(conditions) {
         if (typeof conditions === "string") {
             return conditions;
@@ -54,6 +66,16 @@ export class SqlUtil {
             }
             return order_sql;
         }
+    }
+    /**
+     * 基于 PagerParams 构建分页 LIMIT 子句
+     * @param params 分页参数
+     */
+    static limitPagination(params) {
+        const current = params.current ?? 1;
+        const pageSize = params.pageSize ?? 10;
+        const offset = (current - 1) * pageSize;
+        return ` LIMIT ${offset}, ${pageSize}`;
     }
 }
 //# sourceMappingURL=SqlUtil.js.map
