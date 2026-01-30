@@ -98,7 +98,9 @@ describe('BookDao', () => {
             await new Promise(resolve => setTimeout(resolve, 2000));
         });
 
-        it('should update book by ID and update timestamps correctly', async () => {
+        it('should update book by UUID and update timestamps correctly', async () => {
+            expect(insertedBook.uuid).toBeDefined();
+            
             const beforeUpdate = new Date();
             const updatedData = {
                 ...insertedBook,
@@ -107,12 +109,15 @@ describe('BookDao', () => {
                 updated_at: new Date()
             };
 
-            await bookDao.updateAsync(updatedData);
+            const affectedRows = await bookDao.updateAsync(updatedData);
+            expect(affectedRows).toBeGreaterThan(0); // Ensure update was successful
+            
             const afterUpdate = new Date();
             const updatedBook = await bookDao.getByUuidAsync(insertedBook.uuid);
 
             // Test all updated fields
             expect(updatedBook).toBeDefined();
+            expect(updatedBook).not.toBeNull();
             expect(updatedBook!.created_at).toBeDefined();
             expect(updatedBook!.updated_at).toBeDefined();
 
@@ -127,6 +132,8 @@ describe('BookDao', () => {
         });
 
         it('should update book by UUID and update timestamps correctly', async () => {
+            expect(insertedBook.uuid).toBeDefined();
+            
             const beforeUpdate = new Date();
             const updatedData = {
                 ...insertedBook,
@@ -135,12 +142,15 @@ describe('BookDao', () => {
                 updated_at: new Date()
             };
 
-            await bookDao.updateAsync(updatedData);
+            const affectedRows = await bookDao.updateAsync(updatedData);
+            expect(affectedRows).toBeGreaterThan(0); // Ensure update was successful
+            
             const afterUpdate = new Date();
             const updatedBook = await bookDao.getByUuidAsync(insertedBook.uuid);
 
             // Test all updated fields
             expect(updatedBook).toBeDefined();
+            expect(updatedBook).not.toBeNull();
             expect(updatedBook!.created_at).toBeDefined();
             expect(updatedBook!.updated_at).toBeDefined();
 

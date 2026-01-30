@@ -13,7 +13,7 @@ describe('NewsDao', () => {
     let categoryDao: CategoryDao;
     let testNews: InsertNews;
     let testAuthorId: string;
-    let testUserItem: User | null;
+    let testUserId: number;
 
 
     beforeAll(async () => {
@@ -40,7 +40,11 @@ describe('NewsDao', () => {
             updated_at: new Date()
         };
         testAuthorId = await userDao.insertAsync(testUser);
-        testUserItem = await userDao.getByUuidAsync(testAuthorId);
+        const testUserItem = await userDao.getByUuidAsync(testAuthorId);
+        if (!testUserItem) {
+            throw new Error('Failed to create test user');
+        }
+        testUserId = testUserItem.id;
     });
 
     afterAll(async () => {
@@ -54,11 +58,45 @@ describe('NewsDao', () => {
         // Clear table data
         await DbUtil.executeAsync('DELETE FROM news');
 
+        // Ensure test user exists - find by email first to avoid duplicate key errors
+        const usersByEmail = await DbUtil.executeGetListAsync<User>(
+            'SELECT * FROM user WHERE email = ?',
+            ['test@example.com']
+        );
+        
+        if (usersByEmail.length > 0) {
+            // User exists, use it
+            const existingUser = usersByEmail[0];
+            testAuthorId = existingUser.uuid;
+            testUserId = existingUser.id;
+        } else {
+            // User doesn't exist, create it
+            const testUser: InsertUser = {
+                username: 'testuser',
+                email: 'test@example.com',
+                password_hash: 'hashed_password',
+                first_name: 'Test',
+                last_name: 'User',
+                phone: '+1234567890',
+                is_active: true,
+                role: 'user',
+                last_login: new Date(),
+                created_at: new Date(),
+                updated_at: new Date()
+            };
+            testAuthorId = await userDao.insertAsync(testUser);
+            const newUserItem = await userDao.getByUuidAsync(testAuthorId);
+            if (!newUserItem) {
+                throw new Error('Failed to create test user');
+            }
+            testUserId = newUserItem.id;
+        }
+
         // Prepare test news data with valid author_id
         testNews = {
             title: 'Test News',
             content: 'Test Content',
-            author_id: testUserItem!.id, // Use the created test user's ID
+            author_id: testUserId, // Use the created test user's ID
             status: 'draft',
             view_count: 0,
             published_at: null
@@ -137,7 +175,10 @@ describe('NewsDao', () => {
         });
 
         it('should update news and update timestamps correctly', async () => {
+            expect(insertedNews.id).toBeDefined();
+            
             const beforeUpdate = new Date();
+            // Spread insertedNews to include all fields, then override specific ones
             const updatedData = {
                 ...insertedNews,
                 title: 'Updated News Title',
@@ -145,15 +186,18 @@ describe('NewsDao', () => {
                 status: 'published' as enum_status,
                 view_count: 100,
                 published_at: new Date(),
-                updated_at: new Date()
+                updated_at: new Date()  // Manually set update time
             };
 
-            await newsDao.updateAsync(updatedData);
+            const affectedRows = await newsDao.updateAsync(updatedData);
+            expect(affectedRows).toBeGreaterThan(0); // Ensure update was successful
+            
             const afterUpdate = new Date();
             const updatedNews = await newsDao.getByIdAsync(insertedNews.id);
 
             // Test all updated fields
             expect(updatedNews).toBeDefined();
+            expect(updatedNews).not.toBeNull();
             expect(updatedNews!.title).toBe(updatedData.title);
             expect(updatedNews!.content).toBe(updatedData.content);
             expect(updatedNews!.status).toBe(updatedData.status);

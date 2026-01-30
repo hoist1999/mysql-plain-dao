@@ -31,7 +31,9 @@ describe('UserDao', () => {
     });
 
     beforeEach(async () => {
-        // Clear table data
+        // Clear table data with correct foreign key order
+        await DbUtil.executeAsync('DELETE FROM news');
+        await DbUtil.executeAsync('DELETE FROM user_permission');
         await DbUtil.executeAsync('DELETE FROM user');
     });
 
@@ -118,6 +120,8 @@ describe('UserDao', () => {
         });
 
         it('should update user by ID and update timestamps correctly', async () => {
+            expect(insertedUser.id).toBeDefined();
+            
             const beforeUpdate = new Date();
             const updatedData = {
                 ...insertedUser,
@@ -132,12 +136,15 @@ describe('UserDao', () => {
                 updated_at: new Date()  // Manually set update time
             };
 
-            await userDao.updateAsync(updatedData);
+            const affectedRows = await userDao.updateAsync(updatedData);
+            expect(affectedRows).toBeGreaterThan(0); // Ensure update was successful
+
             const afterUpdate = new Date();
             const updatedUser = await userDao.getByIdAsync(insertedUser.id);
 
             // Test all updated fields
             expect(updatedUser).toBeDefined();
+            expect(updatedUser).not.toBeNull();
             expect(updatedUser!.username).toBe('updated_username');
             expect(updatedUser!.email).toBe('updated@example.com');
             expect(updatedUser!.first_name).toBe('Updated');
@@ -160,6 +167,9 @@ describe('UserDao', () => {
         });
 
         it('should update user by UUID and update timestamps correctly', async () => {
+            expect(insertedUser.id).toBeDefined();
+            expect(insertedUser.uuid).toBeDefined();
+            
             const beforeUpdate = new Date();
             const updatedData = {
                 ...insertedUser,
@@ -168,11 +178,14 @@ describe('UserDao', () => {
                 updated_at: new Date()  // Manually set update time
             };
 
-            await userDao.updateAsync(updatedData);
+            const affectedRows = await userDao.updateAsync(updatedData);
+            expect(affectedRows).toBeGreaterThan(0); // Ensure update was successful
+            
             const afterUpdate = new Date();
             const updatedUser = await userDao.getByUuidAsync(insertedUser.uuid);
 
             expect(updatedUser).toBeDefined();
+            expect(updatedUser).not.toBeNull();
             expect(updatedUser!.username).toBe('updated_by_uuid');
             expect(updatedUser!.email).toBe('updated_uuid@example.com');
             expect(updatedUser!.id).toBe(insertedUser.id);
@@ -278,7 +291,9 @@ describe('UserDao', () => {
     // Custom DAO methods tests
     describe('Custom DAO methods', () => {
         beforeEach(async () => {
-            // Clear table data
+            // Clear table data with correct foreign key order
+            await DbUtil.executeAsync('DELETE FROM news');
+            await DbUtil.executeAsync('DELETE FROM user_permission');
             await DbUtil.executeAsync('DELETE FROM user');
 
             // Insert test users with different dates and statuses

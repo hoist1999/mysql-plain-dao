@@ -379,6 +379,16 @@ UPDATE users SET phone = '' WHERE phone IS NULL;
 
 您可以使用环境变量来避免重复输入连接字符串:
 
+### 使用 pnpm dlx（从 GitHub 运行）
+
+注意：当前版本的 `mysql-plain-dao` **托管在 GitHub（不是 npm Registry）**。如果你想在项目里不安装依赖、直接运行 CLI，可以用 `pnpm dlx` 并指定 `--package=github:...`。
+
+```bash
+# 例：通过环境变量提供连接字符串，然后运行迁移
+DAO_CONN="mysql://user:password@localhost:3306/amz_production" \
+pnpm --package=github:hoist1999/mysql-plain-dao dlx mysql-plain-dao migrate-up
+```
+
 **方式 1: 使用 DAO_CONN（连接字符串格式）:**
 ```bash
 # 设置连接字符串
