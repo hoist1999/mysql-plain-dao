@@ -61,8 +61,13 @@ export class DbUtil {
         }
         const poolConfig = {
             namedPlaceholders: true,
+            debug: false,
             ...config,
         };
+        // mysql2 debug dumps handshake packets and stack traces; opt in with MYSQL2_DEBUG=1
+        if (process.env.MYSQL2_DEBUG !== '1') {
+            poolConfig.debug = false;
+        }
         const pool = mysql.createPool(poolConfig);
         this.setGlobalPool(pool);
     }
@@ -140,8 +145,9 @@ export class DbUtil {
             return result;
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
             console.error("=== Error Executing Database Query ===");
-            console.error(error);
+            console.error(message);
             console.error("sql:", sql);
             console.error("paras:", paras);
             throw error;
@@ -203,8 +209,9 @@ export class DbUtil {
             return result;
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
             console.error("=== Error Executing Database Query ===");
-            console.error(error);
+            console.error(message);
             console.error("sql:", sql);
             console.error("paras:", paras);
             throw new DatabaseError('Database query execution failed', sql, paras, error instanceof Error ? error : undefined);

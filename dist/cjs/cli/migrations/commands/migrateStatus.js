@@ -76,15 +76,7 @@ function createMigrateStatusCommand(commandName = 'migrate-status') {
         }
         catch (error) {
             console.error('\n❌ Failed to get migration status:');
-            if (error.message) {
-                console.error(error.message);
-            }
-            else {
-                console.error('An unexpected error occurred.');
-            }
-            if (error.stack) {
-                console.error(error.stack);
-            }
+            console.error(error.message || 'An unexpected error occurred.');
             process.exit(1);
         }
     });

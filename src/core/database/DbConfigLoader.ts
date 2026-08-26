@@ -57,7 +57,8 @@ export function getDbConfigFromEnv(): mysql.PoolOptions {
         connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
         queueLimit: Number(process.env.DB_QUEUE_LIMIT) || 0,
         waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true',
-        debug: process.env.NODE_ENV === 'development'
+        // mysql2 debug dumps handshake packets and stack traces; opt in with MYSQL2_DEBUG=1
+        debug: process.env.MYSQL2_DEBUG === '1',
     };
 
     debug('DB Config:', {

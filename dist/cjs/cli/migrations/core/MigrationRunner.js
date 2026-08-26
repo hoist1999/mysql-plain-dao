@@ -77,6 +77,8 @@ async function runMigrations(migrationsDir, options = {}) {
             const connectionConfig = {
                 ...baseConfig,
                 multipleStatements: true, // Enable multiple statement execution
+                // mysql2 debug dumps handshake packets and stack traces; opt in with MYSQL2_DEBUG=1
+                debug: process.env.MYSQL2_DEBUG === '1',
             };
             const connection = await promise_1.default.createConnection(connectionConfig);
             try {
@@ -100,17 +102,12 @@ async function runMigrations(migrationsDir, options = {}) {
         }
         catch (error) {
             const errorMsg = error instanceof Error ? error.message : String(error);
-            const errorStack = error instanceof Error ? error.stack : undefined;
             const nodeEnv = process.env.NODE_ENV || '';
             const isTestEnv = nodeEnv.startsWith('test');
             // Don't output error messages in test environment (intentional failures are expected)
             if (!isTestEnv) {
                 console.error(`❌ Migration ${migrationFile.name} failed`);
                 console.error(`   Error: ${errorMsg}`);
-                // Only show stack trace in development, not in production
-                if (errorStack && nodeEnv !== 'production') {
-                    console.error(`   Stack: ${errorStack}`);
-                }
             }
             throw new Error(`Migration ${migrationFile.name} failed: ${errorMsg}`);
         }

@@ -119,10 +119,8 @@ try {
             } catch (e: any) {
                 console.error('\n❌ Generation failed:');
 
-                // Display the user-friendly error message
                 if (e.message) {
                     console.error('\n' + e.message);
-                    console.error(e.stack);
                 } else {
                     console.error('An unexpected error occurred during generation.');
                 }
@@ -185,6 +183,6 @@ https://github.com/hoist1999/mysql-plain-dao`);
 
     program.parse();
 })().catch((e: any) => {
-    console.error('Fatal error:', e);
+    console.error('Fatal error:', e instanceof Error ? e.message : String(e));
     process.exit(1);
 });
